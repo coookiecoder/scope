@@ -23,6 +23,12 @@ int main(const int argc, const char *argv[]) {
         return 1;
     }
 
+    if (sf::Vulkan::isAvailable(true) == false) {
+        std::cerr << "Vulkan is not available" << std::endl;
+        return 2;
+    }
+
+
     const Obj object(argv[1]);
     const bool verbose = argc == 3 && std::string(argv[2]) == "--verbose";
 

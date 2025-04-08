@@ -28,13 +28,18 @@ void VulkanApplication::createInstance() {
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
+    //FOR ---- ---- YOU NEED TO ENABLE THE TWO MF BELOW
+
+    createInfo.enabledExtensionCount = sf::Vulkan::getGraphicsRequiredInstanceExtensions().size();
+    createInfo.ppEnabledExtensionNames = sf::Vulkan::getGraphicsRequiredInstanceExtensions().data();
+
     if (vkCreateInstance(&createInfo, nullptr, &this->instance) != VK_SUCCESS) {
         throw std::runtime_error("failed to create instance");
     }
 }
 
 void VulkanApplication::createSurface() {
-    if (this->window.createVulkanSurface(this->instance, this->surface) != VK_SUCCESS)
+    if (this->window.createVulkanSurface(this->instance, this->surface) == false)
         std::cout << "Failed to create surface" << std::endl;
 }
 
