@@ -7,6 +7,9 @@ void VulkanApplication::initVulkan() {
     if (this->verbose)
         std::cout << "Picking a physical device for vulkan" << std::endl;
     this->pickPhysicalDevice();
+    if (this->verbose)
+        std::cout << "Creating a logical device and queue" << std::endl;
+    this->createLogicalDevice();
 }
 
 void VulkanApplication::createInstance() {
@@ -43,7 +46,7 @@ void VulkanApplication::pickPhysicalDevice() {
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-        if (true) {
+        if (isDeviceUsable(device)) {
             this->physicalDevice = device;
             break;
         }
@@ -64,13 +67,75 @@ void VulkanApplication::pickPhysicalDevice() {
     }
 }
 
+bool VulkanApplication::isDeviceUsable(const VkPhysicalDevice &device) {
+    const QueueFamilyIndices indices = this->findQueueFamilies(device);
+
+    return indices.graphicsFamily.has_value();
+}
+
+QueueFamilyIndices VulkanApplication::findQueueFamilies(const VkPhysicalDevice& device) {
+    QueueFamilyIndices indices;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+    int i = 0;
+    for (const auto& queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+
+        if (indices.graphicsFamily.has_value()) {
+            break;
+        }
+
+        i++;
+    }
+
+    return indices;
+}
+
+void VulkanApplication::createLogicalDevice() {
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+    VkDeviceQueueCreateInfo queueCreateInfo{};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    queueCreateInfo.queueCount = 1;
+    float queuePriority = 1.0f;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos = &queueCreateInfo;
+    createInfo.queueCreateInfoCount = 1;
+    createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.enabledExtensionCount = 0;
+    createInfo.enabledLayerCount = 0;
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &this->logicalDevice) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create logical device!");
+    }
+
+    vkGetDeviceQueue(this->logicalDevice, indices.graphicsFamily.value(), 0, &this->graphicsQueue);
+}
+
+
 void VulkanApplication::cleanUp() {
+    if (this->verbose)
+        std::cout << "Destroying logical device" << std::endl;
+    vkDestroyDevice(this->logicalDevice, nullptr);
     if (this->verbose)
         std::cout << "Destroying vulkan instance" << std::endl;
     vkDestroyInstance(this->instance, nullptr);
 }
 
-VulkanApplication::VulkanApplication(bool verbose) :instance(nullptr), verbose(verbose) {
+VulkanApplication::VulkanApplication(bool verbose) : verbose(verbose) {
     this->initVulkan();
 }
 
