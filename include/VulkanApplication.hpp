@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 #include <set>
+#include <algorithm>
 
 #include <vulkan/vulkan.h>
 #include <SFML/Window/Window.hpp>
@@ -18,6 +19,12 @@ struct QueueFamilyIndices {
     bool isComplete() {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
+};
+
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
 };
 
 const std::vector<const char*> deviceExtensions = {
@@ -34,25 +41,42 @@ class VulkanApplication {
         VkQueue                     graphicsQueue = VK_NULL_HANDLE;
         VkQueue                     presentQueue = VK_NULL_HANDLE;
         VkSurfaceKHR                surface = VK_NULL_HANDLE;
+        VkSwapchainKHR              swapChain = VK_NULL_HANDLE;
+        std::vector<VkImage>        swapChainImages;
+        VkFormat                    swapChainImageFormat = VK_FORMAT_UNDEFINED;
+        VkExtent2D                  swapChainExtent = {};
+        std::vector<VkImageView>    swapChainImageViews;
 
-        bool    verbose;
+        bool                        verbose;
 
-        void                initVulkan();
+        void                    initVulkan();
 
-        void                createInstance();
+        void                    createInstance();
 
-        void                createSurface();
+        void                    createSurface();
 
-        void                pickPhysicalDevice();
-        bool                isDeviceUsable(const VkPhysicalDevice &device);
-        bool                checkDeviceExtensionSupport(VkPhysicalDevice device);
-        QueueFamilyIndices  findQueueFamilies(const VkPhysicalDevice& device);
+        void                    pickPhysicalDevice();
 
-        void                createLogicalDevice();
+        //all the following are just here to check the gpu can do the bare minimum
 
-        void                cleanUp();
+        bool                    isDeviceUsable(const VkPhysicalDevice &device);
+        bool                    checkDeviceExtensionSupport(VkPhysicalDevice device);
+        QueueFamilyIndices      findQueueFamilies(const VkPhysicalDevice& device);
+        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+        VkSurfaceFormatKHR      chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+        VkPresentModeKHR        chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+        VkExtent2D              chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+        void                    createLogicalDevice();
+
+        void                    createSwapChain();
+
+        void                    createImageViews();
+
+        void                    cleanUp();
 
     public:
-        explicit VulkanApplication(bool verbose, sf::Window& window);
+        explicit                VulkanApplication(bool verbose, sf::Window& window);
+
         ~VulkanApplication();
 };
