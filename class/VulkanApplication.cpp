@@ -20,6 +20,10 @@ void VulkanApplication::initVulkan() {
     if (this->verbose)
         std::cout << "Creating swap chain" << std::endl;
     this->createSwapChain();
+
+    if (this->verbose)
+        std::cout << "Creating image views" << std::endl;
+    this->createImageViews();
 }
 
 void VulkanApplication::createInstance() {
