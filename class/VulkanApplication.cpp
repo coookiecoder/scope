@@ -3,7 +3,10 @@
 void VulkanApplication::initVulkan() {
     if (this->verbose)
         std::cout << "Creating vulkan instance" << std::endl;
-    createInstance();
+    this->createInstance();
+    if (this->verbose)
+        std::cout << "Picking a physical device for vulkan" << std::endl;
+    this->pickPhysicalDevice();
 }
 
 void VulkanApplication::createInstance() {
@@ -21,6 +24,43 @@ void VulkanApplication::createInstance() {
 
     if (vkCreateInstance(&createInfo, nullptr, &this->instance) != VK_SUCCESS) {
         throw std::runtime_error("failed to create instance");
+    }
+}
+
+void VulkanApplication::pickPhysicalDevice() {
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(this->instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0)
+        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(this->instance, &deviceCount, devices.data());
+
+    for (const auto& device : devices) {
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+        if (true) {
+            this->physicalDevice = device;
+            break;
+        }
+    }
+
+    if (this->physicalDevice == VK_NULL_HANDLE)
+        throw std::runtime_error("failed to find a suitable GPU!");
+
+    vkGetPhysicalDeviceProperties(this->physicalDevice, &this->physicalDeviceProperties);
+
+    if (this->verbose) {
+        std::cout << "using : " << this->physicalDeviceProperties.deviceName << std::endl;
+        std::cout << "api version : " << this->physicalDeviceProperties.apiVersion << std::endl;
+        std::cout << "device type : " << this->physicalDeviceProperties.deviceType << std::endl;
+        std::cout << "driver version : " << this->physicalDeviceProperties.driverVersion << std::endl;
+        std::cout << "device ID : " << this->physicalDeviceProperties.deviceID << std::endl;
+        std::cout << "vendor ID : " << this->physicalDeviceProperties.vendorID << std::endl;
     }
 }
 
