@@ -5,6 +5,9 @@ void VulkanApplication::initVulkan() {
         std::cout << "Creating vulkan instance" << std::endl;
     this->createInstance();
     if (this->verbose)
+        std::cout << "Creating surface instance" << std::endl;
+    this->createSurface();
+    if (this->verbose)
         std::cout << "Picking a physical device for vulkan" << std::endl;
     this->pickPhysicalDevice();
     if (this->verbose)
@@ -29,6 +32,12 @@ void VulkanApplication::createInstance() {
         throw std::runtime_error("failed to create instance");
     }
 }
+
+void VulkanApplication::createSurface() {
+    if (this->window.createVulkanSurface(this->instance, this->surface) != VK_SUCCESS)
+        std::cout << "Failed to create surface" << std::endl;
+}
+
 
 void VulkanApplication::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
@@ -131,11 +140,14 @@ void VulkanApplication::cleanUp() {
         std::cout << "Destroying logical device" << std::endl;
     vkDestroyDevice(this->logicalDevice, nullptr);
     if (this->verbose)
+        std::cout << "Destroying surface instance" << std::endl;
+    vkDestroySurfaceKHR(this->instance, this->surface, nullptr);
+    if (this->verbose)
         std::cout << "Destroying vulkan instance" << std::endl;
     vkDestroyInstance(this->instance, nullptr);
 }
 
-VulkanApplication::VulkanApplication(bool verbose) : verbose(verbose) {
+VulkanApplication::VulkanApplication(bool verbose, sf::Window &window) : window(window), verbose(verbose) {
     this->initVulkan();
 }
 

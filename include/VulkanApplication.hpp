@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <vulkan/vulkan.h>
+#include <SFML/Window/Window.hpp>
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
@@ -13,17 +14,21 @@ struct QueueFamilyIndices {
 
 class VulkanApplication {
     private:
+        sf::Window                  &window;
         VkInstance                  instance = VK_NULL_HANDLE;
         VkPhysicalDevice            physicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties  physicalDeviceProperties = {};
         VkDevice                    logicalDevice = VK_NULL_HANDLE;
         VkQueue                     graphicsQueue = VK_NULL_HANDLE;
+        VkSurfaceKHR                surface = VK_NULL_HANDLE;
 
         bool    verbose;
 
         void                initVulkan();
 
         void                createInstance();
+
+        void                createSurface();
 
         void                pickPhysicalDevice();
         bool                isDeviceUsable(const VkPhysicalDevice &device);
@@ -34,6 +39,6 @@ class VulkanApplication {
         void                cleanUp();
 
     public:
-        explicit VulkanApplication(bool verbose);
+        explicit VulkanApplication(bool verbose, sf::Window& window);
         ~VulkanApplication();
 };

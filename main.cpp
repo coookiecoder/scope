@@ -35,7 +35,7 @@ int main(const int argc, const char *argv[]) {
 
     sf::Window window(desktopMode, "Scope", sf::Style::Close, sf::State::Fullscreen);
 
-    VulkanApplication app(verbose);
+    VulkanApplication app(verbose, window);
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
