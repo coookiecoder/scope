@@ -73,6 +73,8 @@ class VulkanApplication {
 
         void                    createImageViews();
 
+        void                    createGraphicsPipeline();
+
         void                    cleanUp();
 
     public:

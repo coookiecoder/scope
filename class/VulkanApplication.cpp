@@ -24,6 +24,10 @@ void VulkanApplication::initVulkan() {
     if (this->verbose)
         std::cout << "Creating image views" << std::endl;
     this->createImageViews();
+
+    if (this->verbose)
+        std::cout << "Creating graphics pipeline" << std::endl;
+    this->createGraphicsPipeline();
 }
 
 void VulkanApplication::createInstance() {
@@ -331,6 +335,9 @@ void VulkanApplication::createImageViews() {
     }
 }
 
+void VulkanApplication::createGraphicsPipeline() {
+
+}
 
 void VulkanApplication::cleanUp() {
     if (this->verbose)
