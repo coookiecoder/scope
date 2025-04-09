@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 #include <optional>
 #include <vector>
 #include <set>
@@ -46,39 +47,45 @@ class VulkanApplication {
         VkFormat                    swapChainImageFormat = VK_FORMAT_UNDEFINED;
         VkExtent2D                  swapChainExtent = {};
         std::vector<VkImageView>    swapChainImageViews;
+        VkRenderPass                renderPass = VK_NULL_HANDLE;
+        VkPipelineLayout            pipelineLayout = VK_NULL_HANDLE;
+        VkPipeline                  graphicsPipeline = VK_NULL_HANDLE;
 
         bool                        verbose;
 
-        void                    initVulkan();
+        void                        initVulkan();
 
-        void                    createInstance();
+        void                        createInstance();
 
-        void                    createSurface();
+        void                        createSurface();
 
-        void                    pickPhysicalDevice();
+        void                        pickPhysicalDevice();
 
         //all the following are just here to check the gpu can do the bare minimum
 
-        bool                    isDeviceUsable(const VkPhysicalDevice &device);
-        bool                    checkDeviceExtensionSupport(VkPhysicalDevice device);
-        QueueFamilyIndices      findQueueFamilies(const VkPhysicalDevice& device);
-        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-        VkSurfaceFormatKHR      chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-        VkPresentModeKHR        chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-        VkExtent2D              chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+        bool                        isDeviceUsable(const VkPhysicalDevice &device) const;
+        static bool                 checkDeviceExtensionSupport(VkPhysicalDevice device);
+        QueueFamilyIndices          findQueueFamilies(const VkPhysicalDevice& device) const;
+        SwapChainSupportDetails     querySwapChainSupport(VkPhysicalDevice device) const;
+        static VkSurfaceFormatKHR   chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+        static VkPresentModeKHR     chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+        VkExtent2D                  chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) const;
 
-        void                    createLogicalDevice();
+        void                        createLogicalDevice();
 
-        void                    createSwapChain();
+        void                        createSwapChain();
 
-        void                    createImageViews();
+        void                        createImageViews();
 
-        void                    createGraphicsPipeline();
+        void                        createGraphicsPipeline();
+        VkShaderModule              createShaderModule(const std::vector<char>& code) const;
 
-        void                    cleanUp();
+        void                        createRenderPass();
+
+        void                        cleanUp();
 
     public:
-        explicit                VulkanApplication(bool verbose, sf::Window& window);
+        explicit                    VulkanApplication(bool verbose, sf::Window& window);
 
         ~VulkanApplication();
 };
