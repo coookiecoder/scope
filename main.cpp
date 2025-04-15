@@ -56,7 +56,7 @@ int main(const int argc, const char *argv[]) {
         app.drawFrame();
     }
 
-	app.wait();
+    app.wait();
 
     return 0;
 }

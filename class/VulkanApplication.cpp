@@ -722,16 +722,19 @@ void VulkanApplication::createSyncObjects() {
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    if (vkCreateSemaphore(this->logicalDevice, &semaphoreInfo, nullptr, this->imageAvailableSemaphore.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create image semaphore!");
-    }
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (vkCreateSemaphore(this->logicalDevice, &semaphoreInfo, nullptr, &this->imageAvailableSemaphore[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create image semaphore!");
+        }
 
-    if (vkCreateSemaphore(this->logicalDevice, &semaphoreInfo, nullptr, this->renderFinishedSemaphore.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render semaphores");
-    }
+        if (vkCreateSemaphore(this->logicalDevice, &semaphoreInfo, nullptr, &this->renderFinishedSemaphore[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create render semaphores");
+        }
 
-    if (vkCreateFence(this->logicalDevice, &fenceInfo, nullptr, this->inFlightFence.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create fences!");
+        if (vkCreateFence(this->logicalDevice, &fenceInfo, nullptr, &this->inFlightFence[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create fences!");
+        }
     }
 }
 
