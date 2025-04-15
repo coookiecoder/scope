@@ -37,6 +37,8 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+
 class VulkanApplication {
     private:
         sf::Window                  &window;
@@ -58,12 +60,13 @@ class VulkanApplication {
         VkPipeline                  graphicsPipeline = VK_NULL_HANDLE;
         std::vector<VkFramebuffer>  swapChainFrameBuffers;
         VkCommandPool               commandPool = VK_NULL_HANDLE;
-        VkCommandBuffer             commandBuffer = VK_NULL_HANDLE;
-        VkSemaphore                 imageAvailableSemaphore = VK_NULL_HANDLE;
-        VkSemaphore                 renderFinishedSemaphore = VK_NULL_HANDLE;
-        VkFence                     inFlightFence = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer>commandBuffer;
+        std::vector<VkSemaphore>    imageAvailableSemaphore;
+        std::vector<VkSemaphore>    renderFinishedSemaphore;
+        std::vector<VkFence>        inFlightFence;
 
         bool                        verbose;
+        int                         currentFrame = 0;
 
         void                        initVulkan();
         bool                        checkValidationLayerSupport();
