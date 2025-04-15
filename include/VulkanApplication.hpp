@@ -7,6 +7,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <cstring>
 
 #include <vulkan/vulkan.h>
 #include <SFML/Window/Window.hpp>
@@ -28,6 +29,10 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
@@ -36,6 +41,7 @@ class VulkanApplication {
     private:
         sf::Window                  &window;
         VkInstance                  instance = VK_NULL_HANDLE;
+        VkDebugUtilsMessengerEXT    debugMessenger = VK_NULL_HANDLE;
         VkPhysicalDevice            physicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties  physicalDeviceProperties = {};
         VkDevice                    logicalDevice = VK_NULL_HANDLE;
@@ -60,6 +66,11 @@ class VulkanApplication {
         bool                        verbose;
 
         void                        initVulkan();
+        bool                        checkValidationLayerSupport();
+        VkResult                    CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+        void                        DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+        void                        populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+        void                        setupDebugMessenger();
 
         void                        createInstance();
 
@@ -105,4 +116,5 @@ class VulkanApplication {
         ~VulkanApplication();
 
         void                        drawFrame();
+		void						wait();
 };
