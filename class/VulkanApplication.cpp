@@ -54,6 +54,18 @@ void VulkanApplication::initVulkan() {
     if (this->verbose)
         std::cout << "Creating swap chain frame buffer" << std::endl;
     this->createFrameBuffers();
+
+    if (this->verbose)
+        std::cout << "Creating command pool" << std::endl;
+    this->createCommandPool();
+
+    if (this->verbose)
+        std::cout << "Creating command buffers" << std::endl;
+    this->createCommandBuffer();
+
+    if (this->verbose)
+        std::cout << "Creating sync object" << std::endl;
+    this->createSyncObjects();
 }
 
 void VulkanApplication::createInstance() {
