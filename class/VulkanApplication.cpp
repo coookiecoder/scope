@@ -643,6 +643,12 @@ void VulkanApplication::createSyncObjects() {
 
 void VulkanApplication::cleanUp() {
     if (this->verbose)
+        std::cout << "Destroying sync object" << std::endl;
+    vkDestroySemaphore(this->logicalDevice, this->imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(this->logicalDevice, this->renderFinishedSemaphore, nullptr);
+    vkDestroyFence(this->logicalDevice, this->inFlightFence, nullptr);
+
+    if (this->verbose)
         std::cout << "Destroying command pool" << std::endl;
     vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
 
