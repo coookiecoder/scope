@@ -52,6 +52,10 @@ class VulkanApplication {
         VkPipeline                  graphicsPipeline = VK_NULL_HANDLE;
         std::vector<VkFramebuffer>  swapChainFrameBuffers;
         VkCommandPool               commandPool = VK_NULL_HANDLE;
+        VkCommandBuffer             commandBuffer = VK_NULL_HANDLE;
+        VkSemaphore                 imageAvailableSemaphore = VK_NULL_HANDLE;
+        VkSemaphore                 renderFinishedSemaphore = VK_NULL_HANDLE;
+        VkFence                     inFlightFence = VK_NULL_HANDLE;
 
         bool                        verbose;
 
@@ -88,10 +92,17 @@ class VulkanApplication {
 
         void                        createCommandPool();
 
+        void                        createCommandBuffer();
+        void                        recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+        void                        createSyncObjects();
+
         void                        cleanUp();
 
     public:
         explicit                    VulkanApplication(bool verbose, sf::Window& window);
 
         ~VulkanApplication();
+
+        void                        drawFrame();
 };

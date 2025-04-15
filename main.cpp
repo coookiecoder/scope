@@ -52,6 +52,8 @@ int main(const int argc, const char *argv[]) {
             if (event->is<sf::Event::KeyReleased>())
                 handle_key_released(event->getIf<sf::Event::KeyReleased>(), window);
         }
+
+        app.drawFrame();
     }
 
 
