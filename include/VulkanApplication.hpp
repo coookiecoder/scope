@@ -50,6 +50,7 @@ class VulkanApplication {
         VkRenderPass                renderPass = VK_NULL_HANDLE;
         VkPipelineLayout            pipelineLayout = VK_NULL_HANDLE;
         VkPipeline                  graphicsPipeline = VK_NULL_HANDLE;
+        std::vector<VkFramebuffer>  swapChainFrameBuffers;
 
         bool                        verbose;
 
@@ -77,10 +78,14 @@ class VulkanApplication {
 
         void                        createImageViews();
 
+        void                        createRenderPass();
+
         void                        createGraphicsPipeline();
         VkShaderModule              createShaderModule(const std::vector<char>& code) const;
 
-        void                        createRenderPass();
+        void                        createFrameBuffers();
+
+        void                        createCommandPool();
 
         void                        cleanUp();
 
