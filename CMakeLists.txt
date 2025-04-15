@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(SFML_BUILD_AUDIO FALSE)
 set(SFML_BUILD_NETWORK FALSE)
+set(SFML_BUILD_GRAPHICS FALSE)
 
 message(STATUS "Fetching SFML")
 
@@ -20,4 +21,4 @@ add_executable(Scope main.cpp class/Obj.cpp class/Vector.cpp include/Obj.hpp
 
 find_package(Vulkan REQUIRED)
 
-target_link_libraries(Scope PRIVATE SFML::Graphics Vulkan::Vulkan)
+target_link_libraries(Scope PRIVATE SFML::Window Vulkan::Vulkan)
