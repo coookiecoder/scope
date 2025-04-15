@@ -535,12 +535,25 @@ void VulkanApplication::createFrameBuffers() {
 
 void VulkanApplication::createCommandPool()
 {
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+    if (vkCreateCommandPool(this->logicalDevice, &poolInfo, nullptr, &this->commandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create command pool!");
+    }
 }
 
 
 
 void VulkanApplication::cleanUp() {
+    if (this->verbose)
+        std::cout << "Destroying command pool" << std::endl;
+    vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
+
     if (this->verbose)
         std::cout << "Destroying swap chain frame buffer" << std::endl;
     for (auto framebuffer : this->swapChainFrameBuffers) {

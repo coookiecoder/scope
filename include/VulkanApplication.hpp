@@ -51,6 +51,7 @@ class VulkanApplication {
         VkPipelineLayout            pipelineLayout = VK_NULL_HANDLE;
         VkPipeline                  graphicsPipeline = VK_NULL_HANDLE;
         std::vector<VkFramebuffer>  swapChainFrameBuffers;
+        VkCommandPool               commandPool = VK_NULL_HANDLE;
 
         bool                        verbose;
 
