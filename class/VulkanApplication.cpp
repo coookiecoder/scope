@@ -97,9 +97,14 @@ void VulkanApplication::createInstance() {
     createInfo.pApplicationInfo = &appInfo;
 
     //FOR ---- ---- YOU NEED TO ENABLE THE TWO MF BELOW
+    
+    auto sfmlExtensions = sf::Vulkan::getGraphicsRequiredInstanceExtensions();
 
-    createInfo.enabledExtensionCount = sf::Vulkan::getGraphicsRequiredInstanceExtensions().size();
-    createInfo.ppEnabledExtensionNames = sf::Vulkan::getGraphicsRequiredInstanceExtensions().data();
+    std::vector<const char*> extensions(sfmlExtensions.begin(), sfmlExtensions.end());
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); // Adds "VK_EXT_debug_utils"
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     if (this->verbose) {
@@ -175,7 +180,7 @@ void VulkanApplication::setupDebugMessenger() {
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     populateDebugMessengerCreateInfo(createInfo);
 
-    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+    if (CreateDebugUtilsMessengerEXT(this->instance, &createInfo, nullptr, &this->debugMessenger) != VK_SUCCESS) {
         throw std::runtime_error("failed to set up debug messenger!");
     }
 }
