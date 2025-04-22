@@ -41,7 +41,14 @@ int main(const int argc, const char *argv[]) {
 
     sf::Window window(desktopMode, "Scope", sf::Style::Close, sf::State::Fullscreen);
 
-    VulkanApplication app(verbose, window);
+	std::optional<VulkanApplication> app;
+
+	try {
+        app.emplace(verbose, window);
+	} catch (std::exception &error) {
+		std::cerr << error.what() << std::endl;
+		return (1);
+	}
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
@@ -53,10 +60,10 @@ int main(const int argc, const char *argv[]) {
                 handle_key_released(event->getIf<sf::Event::KeyReleased>(), window);
         }
 
-        app.drawFrame();
+        app->drawFrame();
     }
 
-    app.wait();
+    app->wait();
 
     return 0;
 }
