@@ -77,7 +77,7 @@ int main(const int argc, const char *argv[]) {
                 app->wait();
             else
                 std::cerr << error.what() << std::endl;
-            return window.isOpen() == false;
+            return window.isOpen();
         }
     }
 
