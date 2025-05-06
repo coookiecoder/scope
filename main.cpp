@@ -50,6 +50,8 @@ int main(const int argc, const char *argv[]) {
 		return (1);
 	}
 
+    app->wait();
+
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>())
@@ -62,7 +64,15 @@ int main(const int argc, const char *argv[]) {
                 app->triggerResize();
         }
 
-        app->drawFrame();
+        try {
+            app->drawFrame();
+        } catch (std::exception &error) {
+            if (window.isOpen() == false)
+                app->wait();
+            else
+                std::cerr << error.what() << std::endl;
+            return window.isOpen() == false;
+        }
     }
 
     app->wait();

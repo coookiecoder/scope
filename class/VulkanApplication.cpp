@@ -71,12 +71,18 @@ void VulkanApplication::initVulkan() {
     this->createCommandPool();
 
     if (this->verbose)
+        std::cout << "Creating vertex buffer" << std::endl;
+    this->createVertexBuffer();
+
+    if (this->verbose)
         std::cout << "Creating command buffers" << std::endl;
     this->createCommandBuffer();
 
     if (this->verbose)
         std::cout << "Creating sync object" << std::endl;
     this->createSyncObjects();
+
+    this->swapChainState = true;
 }
 
 void VulkanApplication::createInstance() {
@@ -315,6 +321,9 @@ SwapChainSupportDetails VulkanApplication::querySwapChainSupport(VkPhysicalDevic
 }
 
 VkSurfaceFormatKHR VulkanApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+    if (availableFormats.empty())
+        throw std::runtime_error("No swap surface formats available");
+
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
@@ -443,7 +452,6 @@ void VulkanApplication::recreateSwapChain() {
     auto size = window.getSize();
     while (size.x == 0 || size.y == 0) {
         size = window.getSize();
-        auto event = window.waitEvent();
     }
 
     this->wait();
@@ -453,6 +461,8 @@ void VulkanApplication::recreateSwapChain() {
     this->createSwapChain();
     this->createImageViews();
     this->createFrameBuffers();
+
+    this->swapChainState = true;
 }
 
 void VulkanApplication::createImageViews() {
@@ -535,8 +545,14 @@ void VulkanApplication::createGraphicsPipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -683,11 +699,102 @@ void VulkanApplication::createCommandBuffer() {
     }
 }
 
+void VulkanApplication::createVertexBuffer()  {
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(this->logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, vertices.data(), bufferSize);
+    vkUnmapMemory(this->logicalDevice, stagingBufferMemory);
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+
+    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+
+    vkDestroyBuffer(this->logicalDevice, stagingBuffer, nullptr);
+    vkFreeMemory(this->logicalDevice, stagingBufferMemory, nullptr);
+}
+
+void VulkanApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(this->logicalDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create buffer!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(this->logicalDevice, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(this->logicalDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate buffer memory!");
+    }
+
+    vkBindBufferMemory(this->logicalDevice, buffer, bufferMemory, 0);
+}
+
+uint32_t VulkanApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(this->physicalDevice, &memoryProperties);
+
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if (typeFilter & 1 << i && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
+void VulkanApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = this->commandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(this->logicalDevice, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion{};
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(this->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(this->graphicsQueue);
+
+    vkFreeCommandBuffers(this->logicalDevice, this->commandPool, 1, &commandBuffer);
+}
+
 void VulkanApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = 0; // Optional
-    beginInfo.pInheritanceInfo = nullptr; // Optional
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("failed to begin recording command buffer!");
@@ -722,7 +829,11 @@ void VulkanApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint3
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    VkBuffer vertexBuffers[] = {vertexBuffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -761,6 +872,11 @@ void VulkanApplication::createSyncObjects() {
 
 void VulkanApplication::cleanUp() {
     if (this->verbose)
+        std::cout << "Destroying vertex buffer" << std::endl;
+    vkDestroyBuffer(this->logicalDevice, this->vertexBuffer, nullptr);
+    vkFreeMemory(this->logicalDevice, this->vertexBufferMemory, nullptr);
+
+    if (this->verbose)
         std::cout << "Destroying sync object" << std::endl;
     for (auto image_available_semaphore : this->imageAvailableSemaphore)
         vkDestroySemaphore(this->logicalDevice, image_available_semaphore, nullptr);
@@ -774,12 +890,6 @@ void VulkanApplication::cleanUp() {
     vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
 
     if (this->verbose)
-        std::cout << "Destroying swap chain frame buffer" << std::endl;
-    for (auto framebuffer : this->swapChainFrameBuffers) {
-        vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
-    }
-
-    if (this->verbose)
         std::cout << "Destroying graphics pipeline" << std::endl;
     vkDestroyPipeline(this->logicalDevice, this->graphicsPipeline, nullptr);
 
@@ -791,15 +901,27 @@ void VulkanApplication::cleanUp() {
         std::cout << "Destroying render pass" << std::endl;
     vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
 
-    if (this->verbose)
-        std::cout << "Destroying swap chain image" << std::endl;
-    for (auto imageView : this->swapChainImageViews) {
-        vkDestroyImageView(this->logicalDevice, imageView, nullptr);
-    }
+    if (this->swapChainState) {
+        if (this->verbose)
+            std::cout << "Destroying swap chain frame buffer" << std::endl;
+        for (auto framebuffer : this->swapChainFrameBuffers) {
+            vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
+        }
 
-    if (this->verbose)
+        if (this->verbose)
+            std::cout << "Destroying swap chain image" << std::endl;
+        for (auto imageView : this->swapChainImageViews) {
+            vkDestroyImageView(this->logicalDevice, imageView, nullptr);
+        }
+
+        if (this->verbose)
+            std::cout << "Destroying swap chain" << std::endl;
+        vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
+    } else if (this->verbose) {
+        std::cout << "Destroying swap chain frame buffer" << std::endl;
+        std::cout << "Destroying swap chain image" << std::endl;
         std::cout << "Destroying swap chain" << std::endl;
-    vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
+    }
 
     if (this->verbose)
         std::cout << "Destroying logical device" << std::endl;
@@ -819,15 +941,19 @@ void VulkanApplication::cleanUp() {
 }
 
 void VulkanApplication::cleanupSwapChain() {
-    for (auto framebuffer : this->swapChainFrameBuffers) {
-        vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
-    }
+    if (this->swapChainState) {
+        for (auto framebuffer : this->swapChainFrameBuffers) {
+            vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
+        }
 
-    for (auto imageView : this->swapChainImageViews) {
-        vkDestroyImageView(this->logicalDevice, imageView, nullptr);
-    }
+        for (auto imageView : this->swapChainImageViews) {
+            vkDestroyImageView(this->logicalDevice, imageView, nullptr);
+        }
 
-    vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
+        vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
+
+        this->swapChainState = false;
+    }
 }
 
 VulkanApplication::VulkanApplication(bool verbose, sf::Window &window) : window(window), verbose(verbose) {
@@ -892,7 +1018,7 @@ void VulkanApplication::drawFrame() {
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized) {
         this->recreateSwapChain();
-        frameBufferResized = true;
+        frameBufferResized = false;
     } else if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
     }
