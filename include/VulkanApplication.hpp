@@ -64,6 +64,7 @@ class VulkanApplication {
         std::vector<VkSemaphore>    imageAvailableSemaphore;
         std::vector<VkSemaphore>    renderFinishedSemaphore;
         std::vector<VkFence>        inFlightFence;
+        bool                        frameBufferResized = false;
 
         bool                        verbose;
         int                         currentFrame = 0;
@@ -94,6 +95,7 @@ class VulkanApplication {
         void                        createLogicalDevice();
 
         void                        createSwapChain();
+        void                        recreateSwapChain();
 
         void                        createImageViews();
 
@@ -112,6 +114,7 @@ class VulkanApplication {
         void                        createSyncObjects();
 
         void                        cleanUp();
+        void                        cleanupSwapChain();
 
     public:
         explicit                    VulkanApplication(bool verbose, sf::Window& window);
@@ -120,4 +123,5 @@ class VulkanApplication {
 
         void                        drawFrame();
 		void						wait();
+        void                        triggerResize();
 };

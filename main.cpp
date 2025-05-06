@@ -58,6 +58,8 @@ int main(const int argc, const char *argv[]) {
                 handle_key_pressed(event->getIf<sf::Event::KeyPressed>(), window);
             if (event->is<sf::Event::KeyReleased>())
                 handle_key_released(event->getIf<sf::Event::KeyReleased>(), window);
+            if (event->is<sf::Event::Resized>())
+                app->triggerResize();
         }
 
         app->drawFrame();
