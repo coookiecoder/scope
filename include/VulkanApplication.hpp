@@ -162,6 +162,8 @@ class VulkanApplication {
         uint32_t                    findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void                        copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+        void                        createIndexBuffer();
+
         void                        createCommandBuffer();
         void                        recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
