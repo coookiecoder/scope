@@ -6,6 +6,8 @@
 #include <SFML/Window/Window.hpp>
 #include <SFML/Window/VideoMode.hpp>
 
+#include <X11/Xlib.h>
+
 #include "include/VulkanApplication.hpp"
 
 void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window) {
@@ -28,6 +30,10 @@ int main(const int argc, const char *argv[]) {
         return 2;
     }
 
+    if (!XInitThreads()) {
+        std::cerr << "Failed to initialize X11 threads!" << std::endl;
+        return 3;
+    }
 
     const Obj object(argv[1]);
     const bool verbose = argc == 3 && std::string(argv[2]) == "--verbose";

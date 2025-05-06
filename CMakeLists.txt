@@ -29,7 +29,8 @@ add_executable(Scope main.cpp class/Obj.cpp class/Vector.cpp include/Obj.hpp
         include/VulkanApplication.hpp)
 
 find_package(Vulkan REQUIRED)
+find_package(X11 REQUIRED)
 
 target_include_directories(Scope PRIVATE ${glm_SOURCE_DIR} ${sfml_SOURCE_DIR})
 
-target_link_libraries(Scope PRIVATE SFML::Window Vulkan::Vulkan)
+target_link_libraries(Scope PRIVATE SFML::Window Vulkan::Vulkan X11)
