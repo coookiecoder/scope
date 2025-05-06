@@ -14,11 +14,22 @@ FetchContent_Declare(SFML GIT_REPOSITORY https://github.com/SFML/SFML.git GIT_TA
 FetchContent_MakeAvailable(SFML)
 
 message(STATUS "Fetching SFML done")
+message(STATUS "GLM include directory :" ${sfml_SOURCE_DIR})
+
+message(STATUS "Fetching GLM")
+
+FetchContent_Declare(GLM GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG stable GIT_SHALLOW ON EXCLUDE_FROM_ALL SYSTEM)
+FetchContent_MakeAvailable(GLM)
+
+message(STATUS "Fetching GLM done")
+message(STATUS "GLM include directory :" ${glm_SOURCE_DIR})
 
 add_executable(Scope main.cpp class/Obj.cpp class/Vector.cpp include/Obj.hpp
         class/VulkanApplication.cpp
         include/VulkanApplication.hpp)
 
 find_package(Vulkan REQUIRED)
+
+target_include_directories(Scope PRIVATE ${glm_SOURCE_DIR} ${sfml_SOURCE_DIR})
 
 target_link_libraries(Scope PRIVATE SFML::Window Vulkan::Vulkan)

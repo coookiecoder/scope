@@ -10,9 +10,11 @@
 #include <cstring>
 
 #include <vulkan/vulkan.h>
-#include <SFML/Window/Window.hpp>
 
+#include <SFML/Window/Window.hpp>
 #include <SFML/Window/Vulkan.hpp>
+
+#include <glm/glm.hpp>
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
