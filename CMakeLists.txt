@@ -14,7 +14,7 @@ FetchContent_Declare(SFML GIT_REPOSITORY https://github.com/SFML/SFML.git GIT_TA
 FetchContent_MakeAvailable(SFML)
 
 message(STATUS "Fetching SFML done")
-message(STATUS "GLM include directory :" ${sfml_SOURCE_DIR})
+message(STATUS "SFML include directory :" ${sfml_SOURCE_DIR})
 
 message(STATUS "Fetching GLM")
 
