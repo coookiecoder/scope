@@ -87,6 +87,14 @@ void VulkanApplication::initVulkan() {
     this->createUniformBuffers();
 
     if (this->verbose)
+        std::cout << "Creating descriptor pool" << std::endl;
+    this->createDescriptorPool();
+
+    if (this->verbose)
+        std::cout << "Creating descriptor sets" << std::endl;
+    this->createDescriptorSets();
+
+    if (this->verbose)
         std::cout << "Creating command buffers" << std::endl;
     this->createCommandBuffer();
 
@@ -601,7 +609,7 @@ void VulkanApplication::createGraphicsPipeline() {
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -633,8 +641,8 @@ void VulkanApplication::createGraphicsPipeline() {
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
     if (vkCreatePipelineLayout(this->logicalDevice, &pipelineLayoutInfo, nullptr, &this->pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -823,6 +831,56 @@ void VulkanApplication::createUniformBuffers() {
     }
 }
 
+void VulkanApplication::createDescriptorPool() {
+    VkDescriptorPoolSize poolSize{};
+    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    if (vkCreateDescriptorPool(this->logicalDevice, &poolInfo, nullptr, &this->descriptorPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor pool!");
+    }
+}
+
+void VulkanApplication::createDescriptorSets() {
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    if (vkAllocateDescriptorSets(this->logicalDevice, &allocInfo, this->descriptorSets.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = uniformBuffers[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(UniformBufferObject);
+
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = descriptorSets[i];
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo = nullptr;
+        descriptorWrite.pTexelBufferView = nullptr;
+
+        vkUpdateDescriptorSets(this->logicalDevice, 1, &descriptorWrite, 0, nullptr);
+    }
+}
+
 void VulkanApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -899,6 +957,8 @@ void VulkanApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint3
 
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
@@ -937,6 +997,40 @@ void VulkanApplication::createSyncObjects() {
 }
 
 void VulkanApplication::cleanUp() {
+    if (this->swapChainState) {
+        if (this->verbose)
+            std::cout << "Destroying swap chain frame buffer" << std::endl;
+        for (auto framebuffer : this->swapChainFrameBuffers) {
+            vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
+        }
+
+        if (this->verbose)
+            std::cout << "Destroying swap chain image" << std::endl;
+        for (auto imageView : this->swapChainImageViews) {
+            vkDestroyImageView(this->logicalDevice, imageView, nullptr);
+        }
+
+        if (this->verbose)
+            std::cout << "Destroying swap chain" << std::endl;
+        vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
+    } else if (this->verbose) {
+        std::cout << "Destroying swap chain frame buffer" << std::endl;
+        std::cout << "Destroying swap chain image" << std::endl;
+        std::cout << "Destroying swap chain" << std::endl;
+    }
+
+    if (this->verbose)
+        std::cout << "Destroying graphics pipeline" << std::endl;
+    vkDestroyPipeline(this->logicalDevice, this->graphicsPipeline, nullptr);
+
+    if (this->verbose)
+        std::cout << "Destroying pipeline layout" << std::endl;
+    vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
+
+    if (this->verbose)
+        std::cout << "Destroying render pass" << std::endl;
+    vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
+
     if (this->verbose)
         std::cout << "Destroying uniform buffers" << std::endl;
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -945,7 +1039,11 @@ void VulkanApplication::cleanUp() {
     }
 
     if (this->verbose)
-        std::cout << "Destroying descriptor set layout" << std::endl;
+        std::cout << "Destroying descriptor pool" << std::endl;
+    vkDestroyDescriptorPool(this->logicalDevice, this->descriptorPool, nullptr);
+
+    if (this->verbose)
+        std::cout << "Destroying descriptor sets" << std::endl;
     vkDestroyDescriptorSetLayout(this->logicalDevice, this->descriptorSetLayout, nullptr);
 
     if (this->verbose)
@@ -970,40 +1068,6 @@ void VulkanApplication::cleanUp() {
     if (this->verbose)
         std::cout << "Destroying command pool" << std::endl;
     vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
-
-    if (this->verbose)
-        std::cout << "Destroying graphics pipeline" << std::endl;
-    vkDestroyPipeline(this->logicalDevice, this->graphicsPipeline, nullptr);
-
-    if (this->verbose)
-        std::cout << "Destroying pipeline layout" << std::endl;
-    vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
-
-    if (this->verbose)
-        std::cout << "Destroying render pass" << std::endl;
-    vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
-
-    if (this->swapChainState) {
-        if (this->verbose)
-            std::cout << "Destroying swap chain frame buffer" << std::endl;
-        for (auto framebuffer : this->swapChainFrameBuffers) {
-            vkDestroyFramebuffer(this->logicalDevice, framebuffer, nullptr);
-        }
-
-        if (this->verbose)
-            std::cout << "Destroying swap chain image" << std::endl;
-        for (auto imageView : this->swapChainImageViews) {
-            vkDestroyImageView(this->logicalDevice, imageView, nullptr);
-        }
-
-        if (this->verbose)
-            std::cout << "Destroying swap chain" << std::endl;
-        vkDestroySwapchainKHR(this->logicalDevice, this->swapChain, nullptr);
-    } else if (this->verbose) {
-        std::cout << "Destroying swap chain frame buffer" << std::endl;
-        std::cout << "Destroying swap chain image" << std::endl;
-        std::cout << "Destroying swap chain" << std::endl;
-    }
 
     if (this->verbose)
         std::cout << "Destroying logical device" << std::endl;

@@ -122,9 +122,11 @@ class VulkanApplication {
         VkBuffer                    indexBuffer = VK_NULL_HANDLE;
         VkDeviceMemory              indexBufferMemory = VK_NULL_HANDLE;
         VkDescriptorSetLayout       descriptorSetLayout = VK_NULL_HANDLE;
-        std::vector<VkBuffer> uniformBuffers;
+        std::vector<VkBuffer>       uniformBuffers;
         std::vector<VkDeviceMemory> uniformBuffersMemory;
-        std::vector<void*> uniformBuffersMapped;
+        std::vector<void*>          uniformBuffersMapped;
+        VkDescriptorPool            descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>descriptorSets;
 
         bool                        verbose;
         int                         currentFrame = 0;
@@ -180,6 +182,10 @@ class VulkanApplication {
         void                        createIndexBuffer();
 
         void                        createUniformBuffers();
+
+        void                        createDescriptorPool();
+
+        void                        createDescriptorSets();
 
         void                        createCommandBuffer();
         void                        recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
