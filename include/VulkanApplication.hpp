@@ -206,7 +206,4 @@ class VulkanApplication {
         void                        triggerResize();
 
         float                       angle = 0.0f;
-        float                       center_X = 0.0f;
-        float                       center_Y = 0.0f;
-        float                       center_Z = 0.0f;
 };

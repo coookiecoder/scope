@@ -21,18 +21,6 @@ void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, 
         case sf::Keyboard::Key::LShift:
             fast = true;
             break;
-        case sf::Keyboard::Key::W:
-            app.center_X += 0.1f;
-            break;
-        case sf::Keyboard::Key::S:
-            app.center_X -= 0.1f;
-            break;
-        case sf::Keyboard::Key::D:
-            app.center_Y += 0.1f;
-            break;
-        case sf::Keyboard::Key::A:
-            app.center_Y -= 0.1f;
-            break;
         case sf::Keyboard::Key::Q:
             app.angle += 0.01f + 0.1f * static_cast<float>(fast);
             break;
