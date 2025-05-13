@@ -173,3 +173,86 @@ std::ostream& operator<<(std::ostream& os, const Obj& obj) {
 
     return os;
 }
+
+glm::vec3 cookie::subtract(const glm::vec3& a, const glm::vec3& b) {
+    return glm::vec3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+glm::vec3 cookie::add(const glm::vec3& a, const glm::vec3& b) {
+    return glm::vec3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+glm::vec3 cookie::normalize(glm::vec3 vector) {
+    float len = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+    if (len == 0.0f)
+        return glm::vec3(0.0f);
+    return glm::vec3(vector.x / len, vector.y / len, vector.z / len);
+}
+
+glm::vec3 cookie::cross(glm::vec3 a, glm::vec3 b) {
+    return glm::vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+glm::mat4 cookie::rotate(glm::mat4 m, float angle, glm::vec3 axis) {
+    axis = cookie::normalize(axis);
+    float c = cos(angle);
+    float s = sin(angle);
+    float t = 1.0f - c;
+
+    float x = axis.x;
+    float y = axis.y;
+    float z = axis.z;
+
+    glm::mat4 rot(1.0f);
+    rot[0][0] = t*x*x + c;
+    rot[0][1] = t*x*y + s*z;
+    rot[0][2] = t*x*z - s*y;
+
+    rot[1][0] = t*x*y - s*z;
+    rot[1][1] = t*y*y + c;
+    rot[1][2] = t*y*z + s*x;
+
+    rot[2][0] = t*x*z + s*y;
+    rot[2][1] = t*y*z - s*x;
+    rot[2][2] = t*z*z + c;
+
+    return m * rot;
+}
+
+glm::mat4 cookie::lookAt(glm::vec3 eye, glm::vec3 center, glm::vec3 up) {
+    glm::vec3 f = cookie::normalize(cookie::subtract(center, eye));
+    glm::vec3 s = cookie::normalize(cookie::cross(f, up));
+    glm::vec3 u = cookie::cross(s, f);
+
+    glm::mat4 result(1.0f);
+    result[0][0] = s.x;
+    result[1][0] = s.y;
+    result[2][0] = s.z;
+
+    result[0][1] = u.x;
+    result[1][1] = u.y;
+    result[2][1] = u.z;
+
+    result[0][2] = -f.x;
+    result[1][2] = -f.y;
+    result[2][2] = -f.z;
+
+    result[3][0] = -glm::dot(s, eye);
+    result[3][1] = -glm::dot(u, eye);
+    result[3][2] = glm::dot(f, eye);
+
+    return result;
+}
+
+glm::mat4 cookie::perspective(float fov, float aspect, float near, float far) {
+    float tanHalfFov = tan(fov / 2.0f);
+    glm::mat4 result(0.0f);
+
+    result[0][0] = 1.0f / (aspect * tanHalfFov);
+    result[1][1] = 1.0f / tanHalfFov;
+    result[2][2] = -(far + near) / (far - near);
+    result[2][3] = -1.0f;
+    result[3][2] = -(2.0f * far * near) / (far - near);
+
+    return result;
+}

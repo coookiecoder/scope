@@ -83,6 +83,10 @@ void VulkanApplication::initVulkan() {
     this->createIndexBuffer();
 
     if (this->verbose)
+        std::cout << "Creating uniform buffers" << std::endl;
+    this->createUniformBuffers();
+
+    if (this->verbose)
         std::cout << "Creating command buffers" << std::endl;
     this->createCommandBuffer();
 
@@ -805,6 +809,20 @@ void VulkanApplication::createIndexBuffer() {
     vkFreeMemory(this->logicalDevice, stagingBufferMemory, nullptr);
 }
 
+void VulkanApplication::createUniformBuffers() {
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    this->uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    this->uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    this->uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, this->uniformBuffers[i], this->uniformBuffersMemory[i]);
+
+        vkMapMemory(this->logicalDevice, this->uniformBuffersMemory[i], 0, bufferSize, 0, &this->uniformBuffersMapped[i]);
+    }
+}
+
 void VulkanApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -920,6 +938,13 @@ void VulkanApplication::createSyncObjects() {
 
 void VulkanApplication::cleanUp() {
     if (this->verbose)
+        std::cout << "Destroying uniform buffers" << std::endl;
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroyBuffer(this->logicalDevice, this->uniformBuffers[i], nullptr);
+        vkFreeMemory(this->logicalDevice, this->uniformBuffersMemory[i], nullptr);
+    }
+
+    if (this->verbose)
         std::cout << "Destroying descriptor set layout" << std::endl;
     vkDestroyDescriptorSetLayout(this->logicalDevice, this->descriptorSetLayout, nullptr);
 
@@ -1013,6 +1038,24 @@ void VulkanApplication::cleanupSwapChain() {
     }
 }
 
+void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    UniformBufferObject ubo{};
+    ubo.model = cookie::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    ubo.view = cookie::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    ubo.proj = cookie::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+
+    ubo.proj[1][1] *= -1;
+
+    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+}
+
 VulkanApplication::VulkanApplication(bool verbose, sf::Window &window) : window(window), verbose(verbose) {
     this->initVulkan();
 }
@@ -1035,6 +1078,8 @@ void VulkanApplication::drawFrame() {
     }
 
     vkResetFences(this->logicalDevice, 1, &inFlightFence[currentFrame]);
+
+    this->updateUniformBuffer(currentFrame);
 
     vkResetCommandBuffer(commandBuffer[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
     recordCommandBuffer(commandBuffer[currentFrame], imageIndex);

@@ -16,6 +16,10 @@
 
 #include <glm/glm.hpp>
 
+#include "../include/Obj.hpp"
+
+#define GLM_FORCE_RADIANS
+
 struct Vertex {
     glm::vec2 pos;
     glm::vec3 color;
@@ -118,6 +122,9 @@ class VulkanApplication {
         VkBuffer                    indexBuffer = VK_NULL_HANDLE;
         VkDeviceMemory              indexBufferMemory = VK_NULL_HANDLE;
         VkDescriptorSetLayout       descriptorSetLayout = VK_NULL_HANDLE;
+        std::vector<VkBuffer> uniformBuffers;
+        std::vector<VkDeviceMemory> uniformBuffersMemory;
+        std::vector<void*> uniformBuffersMapped;
 
         bool                        verbose;
         int                         currentFrame = 0;
@@ -172,6 +179,8 @@ class VulkanApplication {
 
         void                        createIndexBuffer();
 
+        void                        createUniformBuffers();
+
         void                        createCommandBuffer();
         void                        recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
@@ -180,6 +189,7 @@ class VulkanApplication {
         void                        cleanUp();
         void                        cleanupSwapChain();
 
+        void                        updateUniformBuffer(uint32_t currentImage);
     public:
         explicit                    VulkanApplication(bool verbose, sf::Window& window);
 

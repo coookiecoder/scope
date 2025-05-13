@@ -7,6 +7,8 @@
 
 #include "../template/Vector.tpp"
 
+#include <glm/glm.hpp>
+
 class Face {
     private:
         std::vector<int> vertices_index;
@@ -55,3 +57,15 @@ class Obj {
 };
 
 std::ostream& operator<<(std::ostream& os, const Obj& obj);
+
+namespace cookie {
+    glm::vec3 subtract(const glm::vec3& a, const glm::vec3& b);
+    glm::vec3 add(const glm::vec3& a, const glm::vec3& b);
+
+    glm::vec3 normalize(glm::vec3);
+    glm::vec3 cross(glm::vec3, glm::vec3);
+
+    glm::mat4 rotate(glm::mat4, float, glm::vec3);
+    glm::mat4 lookAt(glm::vec3, glm::vec3, glm::vec3);
+    glm::mat4 perspective(float, float, float, float);
+}
