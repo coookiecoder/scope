@@ -204,6 +204,4 @@ class VulkanApplication {
         void                        drawFrame();
 		void						wait();
         void                        triggerResize();
-
-        float                       angle = 0.0f;
 };

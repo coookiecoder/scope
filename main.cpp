@@ -18,24 +18,12 @@ void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, 
         case sf::Keyboard::Key::Escape:
             window.close();
             break;
-        case sf::Keyboard::Key::LShift:
-            fast = true;
-            break;
-        case sf::Keyboard::Key::Q:
-            app.angle += 0.01f + 0.1f * static_cast<float>(fast);
-            break;
-        case sf::Keyboard::Key::E:
-            app.angle -= 0.01f + 0.1f * static_cast<float>(fast);
-            break;
     }
 }
 
 void handle_key_released(const sf::Event::KeyReleased* event, sf::Window& window, VulkanApplication& app) {
     switch (event->code) {
         default:
-            break;
-        case sf::Keyboard::Key::LShift:
-            fast = false;
             break;
     }
 }
