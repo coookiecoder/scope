@@ -9,13 +9,47 @@
 #include "include/Obj.hpp"
 #include "include/VulkanApplication.hpp"
 
-void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window) {
-    if (event->code == sf::Keyboard::Key::Escape)
-        window.close();
+bool fast = false;
+
+void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, VulkanApplication& app) {
+    switch (event->code) {
+        default:
+            break;
+        case sf::Keyboard::Key::Escape:
+            window.close();
+            break;
+        case sf::Keyboard::Key::LShift:
+            fast = true;
+            break;
+        case sf::Keyboard::Key::W:
+            app.center_X += 0.1f;
+            break;
+        case sf::Keyboard::Key::S:
+            app.center_X -= 0.1f;
+            break;
+        case sf::Keyboard::Key::D:
+            app.center_Y += 0.1f;
+            break;
+        case sf::Keyboard::Key::A:
+            app.center_Y -= 0.1f;
+            break;
+        case sf::Keyboard::Key::Q:
+            app.angle += 0.01f + 0.1f * static_cast<float>(fast);
+            break;
+        case sf::Keyboard::Key::E:
+            app.angle -= 0.01f + 0.1f * static_cast<float>(fast);
+            break;
+    }
 }
 
-void handle_key_released(const sf::Event::KeyReleased* event, sf::Window& window) {
-
+void handle_key_released(const sf::Event::KeyReleased* event, sf::Window& window, VulkanApplication& app) {
+    switch (event->code) {
+        default:
+            break;
+        case sf::Keyboard::Key::LShift:
+            fast = false;
+            break;
+    }
 }
 
 int main(const int argc, const char *argv[]) {
@@ -65,9 +99,9 @@ int main(const int argc, const char *argv[]) {
             if (event->is<sf::Event::Closed>())
                 window.close();
             if (event->is<sf::Event::KeyPressed>())
-                handle_key_pressed(event->getIf<sf::Event::KeyPressed>(), window);
+                handle_key_pressed(event->getIf<sf::Event::KeyPressed>(), window, app.value());
             if (event->is<sf::Event::KeyReleased>())
-                handle_key_released(event->getIf<sf::Event::KeyReleased>(), window);
+                handle_key_released(event->getIf<sf::Event::KeyReleased>(), window, app.value());
             if (event->is<sf::Event::Resized>())
                 app->triggerResize();
         }
