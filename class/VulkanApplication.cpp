@@ -59,6 +59,10 @@ void VulkanApplication::initVulkan() {
     this->createRenderPass();
 
     if (this->verbose)
+        std::cout << "Creating descriptor set layout" << std::endl;
+    this->createDescriptorSetLayout();
+
+    if (this->verbose)
         std::cout << "Creating graphics pipeline" << std::endl;
     this->createGraphicsPipeline();
 
@@ -526,6 +530,24 @@ void VulkanApplication::createRenderPass() {
     }
 }
 
+void VulkanApplication::createDescriptorSetLayout() {
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+
+    if (vkCreateDescriptorSetLayout(this->logicalDevice, &layoutInfo, nullptr, &this->descriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+}
+
 void VulkanApplication::createGraphicsPipeline() {
     auto vertShaderCode = readFile("shader/vert.spv");
     auto fragShaderCode = readFile("shader/frag.spv");
@@ -897,6 +919,10 @@ void VulkanApplication::createSyncObjects() {
 }
 
 void VulkanApplication::cleanUp() {
+    if (this->verbose)
+        std::cout << "Destroying descriptor set layout" << std::endl;
+    vkDestroyDescriptorSetLayout(this->logicalDevice, this->descriptorSetLayout, nullptr);
+
     if (this->verbose)
         std::cout << "Destroying index buffer" << std::endl;
     vkDestroyBuffer(this->logicalDevice, this->indexBuffer, nullptr);

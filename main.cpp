@@ -1,5 +1,3 @@
-#include "include/Obj.hpp"
-
 #include <iostream>
 #include <string>
 
@@ -8,6 +6,7 @@
 
 #include <X11/Xlib.h>
 
+#include "include/Obj.hpp"
 #include "include/VulkanApplication.hpp"
 
 void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window) {

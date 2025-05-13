@@ -57,6 +57,11 @@ const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
@@ -112,6 +117,7 @@ class VulkanApplication {
         VkDeviceMemory              vertexBufferMemory = VK_NULL_HANDLE;
         VkBuffer                    indexBuffer = VK_NULL_HANDLE;
         VkDeviceMemory              indexBufferMemory = VK_NULL_HANDLE;
+        VkDescriptorSetLayout       descriptorSetLayout = VK_NULL_HANDLE;
 
         bool                        verbose;
         int                         currentFrame = 0;
@@ -149,6 +155,8 @@ class VulkanApplication {
         void                        createImageViews();
 
         void                        createRenderPass();
+
+        void                        createDescriptorSetLayout();
 
         void                        createGraphicsPipeline();
         VkShaderModule              createShaderModule(const std::vector<char>& code) const;
