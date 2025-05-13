@@ -42,9 +42,12 @@ int main(const int argc, const char *argv[]) {
         std::cout << object << std::endl;
     }
 
-    const sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
+    sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 
-    sf::Window window(desktopMode, "Scope", sf::Style::Close, sf::State::Fullscreen);
+    desktopMode.size.x /= 2;
+    desktopMode.size.y /= 2;
+
+    sf::Window window(desktopMode, "Scope", sf::Style::Close, sf::State::Windowed);
 
 	std::optional<VulkanApplication> app;
 

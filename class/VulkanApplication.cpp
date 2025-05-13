@@ -1,5 +1,8 @@
 #include "../include/VulkanApplication.hpp"
 
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
+
 static
 std::vector<char> readFile(const std::string& fileName) {
     std::ifstream file(fileName, std::ios::ate | std::ios::binary);
