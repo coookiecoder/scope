@@ -14,15 +14,14 @@
 #include <SFML/Window/Window.hpp>
 #include <SFML/Window/Vulkan.hpp>
 
-#include <glm/glm.hpp>
-
 #include "../include/Obj.hpp"
+#include "../template/Matrix.tpp"
 
 #define GLM_FORCE_RADIANS
 
 struct Vertex {
-    glm::vec2 pos;
-    glm::vec3 color;
+    cookie::Vector2D<float> pos;
+    cookie::Vector3D<float> color;
 
     static VkVertexInputBindingDescription getBindingDescription() {
         VkVertexInputBindingDescription bindingDescription{};
@@ -62,9 +61,9 @@ const std::vector<uint16_t> indices = {
 };
 
 struct UniformBufferObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    cookie::Matrix4D<float> model;
+    cookie::Matrix4D<float> view;
+    cookie::Matrix4D<float> proj;
 };
 
 struct QueueFamilyIndices {

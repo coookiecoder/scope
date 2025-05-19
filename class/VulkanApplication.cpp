@@ -1,7 +1,6 @@
 #include "../include/VulkanApplication.hpp"
 
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "../template/Matrix.tpp"
 
 static
 std::vector<char> readFile(const std::string& fileName) {
@@ -1112,11 +1111,11 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.model = cookie::rotate(glm::mat4(1.0f), time * 3.14f, glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = cookie::rotate(cookie::Matrix4D<float>(1.0f), time * 3.14f, cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
-    ubo.view = cookie::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = cookie::lookAt(cookie::Vector3D<float>(2.0f, 2.0f, 2.0f), cookie::Vector3D<float>(0.0f, 0.0f, 0.0f), cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
-    ubo.proj = cookie::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+    ubo.proj = cookie::perspective(static_cast<float>(3.14 / 4), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
 
     ubo.proj[1][1] *= -1;
 
