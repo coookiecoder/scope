@@ -1,5 +1,6 @@
 # Cube with normals and texture coordinates
 mtllib cube.mtl
+usemtl UwU
 
 # Vertices
 v -0.5 -0.5 -0.5
