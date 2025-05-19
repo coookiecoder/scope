@@ -95,7 +95,7 @@ void Obj::parseFace(const std::string &line) {
     while (iss >> token) {
         std::ranges::replace(token, '/', ' ');
         std::istringstream tokenStream(token);
-        int vertexIdx, texCoordIdx, normalIdx;
+        int vertexIdx, texCoordIdx, normalIdx = 0;
 
         tokenStream >> vertexIdx >> texCoordIdx >> normalIdx;
         face.addVerticesIndex(vertexIdx);
