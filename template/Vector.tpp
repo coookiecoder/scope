@@ -11,6 +11,7 @@ namespace cookie
         Type x = 0;
         Type y = 0;
         Type z = 0;
+        Type _padding = 0;
 
     public:
         Vector3D();
@@ -33,7 +34,7 @@ namespace cookie
     std::istream &operator>>(std::istream &is, Vector3D<Type>& vector);
 
     template <class Type>
-    class alignas(16) Vector2D {
+    class alignas(8) Vector2D {
     public:
         Type x = 0;
         Type y = 0;
