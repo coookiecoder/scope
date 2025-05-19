@@ -1,4 +1,5 @@
 # Cube with normals and texture coordinates
+mtllib cube.mtl
 
 # Vertices
 v -0.5 -0.5 -0.5
@@ -17,12 +18,12 @@ vt 1.0 1.0
 vt 0.0 1.0
 
 # Normals
-vn  0.0  0.0 -1.0  # back
-vn  0.0  0.0  1.0  # front
-vn -1.0  0.0  0.0  # left
-vn  1.0  0.0  0.0  # right
-vn  0.0  1.0  0.0  # top
-vn  0.0 -1.0  0.0  # bottom
+vn  0.0  0.0 -1.0
+vn  0.0  0.0  1.0
+vn -1.0  0.0  0.0
+vn  1.0  0.0  0.0
+vn  0.0  1.0  0.0
+vn  0.0 -1.0  0.0
 
 # Faces (triangles: v/vt/vn)
 # Back face
