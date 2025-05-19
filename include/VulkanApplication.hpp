@@ -128,6 +128,8 @@ class VulkanApplication {
         std::vector<VkDescriptorSet>descriptorSets;
         VkImage                     textureImage = VK_NULL_HANDLE;
         VkDeviceMemory              textureImageMemory = VK_NULL_HANDLE;
+        VkImageView                 textureImageView = VK_NULL_HANDLE;
+        VkSampler                   textureSampler = VK_NULL_HANDLE;
 
         bool                        verbose;
         int                         currentFrame = 0;
@@ -182,6 +184,11 @@ class VulkanApplication {
         void                        endSingleTimeCommands(VkCommandBuffer commandBuffer);
         void                        transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
         void                        copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
+        void                        createTextureImageView();
+        VkImageView                 createImageView(VkImage image, VkFormat format);
+
+        void                        createTextureSampler();
 
         void                        createVertexBuffer();
         void                        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);

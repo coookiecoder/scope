@@ -79,6 +79,14 @@ void VulkanApplication::initVulkan() {
     this->createTextureImage();
 
     if (this->verbose)
+        std::cout << "Creating texture image view" << std::endl;
+    this->createTextureImageView();
+
+    if (this->verbose)
+        std::cout << "Creating texture sampler" << std::endl;
+    this->createTextureSampler();
+
+    if (this->verbose)
         std::cout << "Creating vertex buffer" << std::endl;
     this->createVertexBuffer();
 
@@ -269,7 +277,10 @@ bool VulkanApplication::isDeviceUsable(const VkPhysicalDevice &device) const {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate;
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 bool VulkanApplication::checkDeviceExtensionSupport(VkPhysicalDevice device) {
@@ -400,6 +411,7 @@ void VulkanApplication::createLogicalDevice() {
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -898,6 +910,54 @@ void VulkanApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32
     endSingleTimeCommands(commandBuffer);
 }
 
+void VulkanApplication::createTextureImageView() {
+    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+}
+
+VkImageView VulkanApplication::createImageView(VkImage image, VkFormat format) {
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = format;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    VkImageView imageView;
+    if (vkCreateImageView(this->logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create texture image view!");
+    }
+
+    return imageView;
+}
+
+void VulkanApplication::createTextureSampler() {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_TRUE;
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+    if (vkCreateSampler(this->logicalDevice, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create texture sampler!");
+    }
+}
+
 void VulkanApplication::createCommandBuffer() {
     this->commandBuffer.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -1173,6 +1233,8 @@ void VulkanApplication::cleanUp() {
 
     if (this->verbose)
         std::cout << "Destroying image" << std::endl;
+    vkDestroySampler(this->logicalDevice, this->textureSampler, nullptr);
+    vkDestroyImageView(this->logicalDevice, this->textureImageView, nullptr);
     vkDestroyImage(this->logicalDevice, this->textureImage, nullptr);
     vkFreeMemory(this->logicalDevice, this->textureImageMemory, nullptr);
 
