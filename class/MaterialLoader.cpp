@@ -38,6 +38,7 @@ MaterialLoader::MaterialLoader(const std::vector<std::string>& filepaths) {
                 iss >> current.illum;
             } else if (keyword == "map_Kd") {
                 iss >> current.map_Kd;
+                current.map_Kd = filepath.substr(0, filepath.find_last_of('/') + 1) + current.map_Kd;
             } else if (keyword == "map_Bump" || keyword == "bump") {
                 iss >> current.map_Bump;
             }

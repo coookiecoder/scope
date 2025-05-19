@@ -16,12 +16,18 @@ FetchContent_MakeAvailable(SFML)
 message(STATUS "Fetching SFML done")
 message(STATUS "SFML include directory :" ${sfml_SOURCE_DIR})
 
-add_executable(Scope main.cpp class/Obj.cpp class/Vector.cpp include/Obj.hpp
+add_executable(Scope main.cpp
+        class/Obj.cpp
         class/VulkanApplication.cpp
-        include/VulkanApplication.hpp
-        template/Matrix.tpp
         class/MaterialLoader.cpp
-        include/MaterialLoader.hpp)
+
+        include/VulkanApplication.hpp
+        include/Obj.hpp
+        include/MaterialLoader.hpp
+        include/stb_image.h
+
+        template/Matrix.tpp
+        template/Vector.tpp)
 
 find_package(Vulkan REQUIRED)
 find_package(X11 REQUIRED)

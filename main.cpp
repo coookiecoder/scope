@@ -10,6 +10,9 @@
 #include "include/MaterialLoader.hpp"
 #include "include/VulkanApplication.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "include/stb_image.h"
+
 bool fast = false;
 
 void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, VulkanApplication& app) {
@@ -73,7 +76,10 @@ int main(const int argc, const char *argv[]) {
 	std::optional<VulkanApplication> app;
 
 	try {
-        app.emplace(verbose, window);
+	    if (object.hasImage())
+            app.emplace(verbose, window, material.value().getMaterials()[0].map_Kd);
+	    else
+	        app.emplace(verbose, window, "");
 	} catch (std::exception &error) {
 		std::cerr << error.what() << std::endl;
 		return (1);

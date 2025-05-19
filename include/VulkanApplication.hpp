@@ -15,9 +15,9 @@
 #include <SFML/Window/Vulkan.hpp>
 
 #include "../include/Obj.hpp"
-#include "../template/Matrix.tpp"
+#include "../include/stb_image.h"
 
-#define GLM_FORCE_RADIANS
+#include "../template/Matrix.tpp"
 
 struct Vertex {
     cookie::Vector2D<float> pos;
@@ -126,11 +126,14 @@ class VulkanApplication {
         std::vector<void*>          uniformBuffersMapped;
         VkDescriptorPool            descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>descriptorSets;
+        VkImage                     textureImage = VK_NULL_HANDLE;
+        VkDeviceMemory              textureImageMemory = VK_NULL_HANDLE;
 
         bool                        verbose;
         int                         currentFrame = 0;
         bool                        frameBufferResized = false;
         bool                        swapChainState = false;
+        std::string                 texturePath;
 
         void                        initVulkan();
         bool                        checkValidationLayerSupport();
@@ -173,6 +176,13 @@ class VulkanApplication {
 
         void                        createCommandPool();
 
+        void                        createTextureImage();
+        void                        createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        VkCommandBuffer             beginSingleTimeCommands();
+        void                        endSingleTimeCommands(VkCommandBuffer commandBuffer);
+        void                        transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+        void                        copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
         void                        createVertexBuffer();
         void                        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
         uint32_t                    findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -196,7 +206,7 @@ class VulkanApplication {
 
         void                        updateUniformBuffer(uint32_t currentImage);
     public:
-        explicit                    VulkanApplication(bool verbose, sf::Window& window);
+        explicit                    VulkanApplication(bool verbose, sf::Window& window, std::string texturePath);
 
         ~VulkanApplication();
 
