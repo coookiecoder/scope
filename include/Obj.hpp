@@ -38,11 +38,13 @@ class Obj {
         std::vector<cookie::Vector2D<float>> texture_coordinates = {};
         std::vector<cookie::Vector3D<float>> normals = {};
         std::vector<Face> faces;
+        std::vector<std::string> material_path;
 
         void parseVertex(const std::string &line);
         void parseTexCoord(const std::string &line);
         void parseNormal(const std::string &line);
         void parseFace(const std::string &line);
+        void parseMaterial(const std::string &line, std::string path_obj);
 
     public:
         explicit Obj(const std::string& path);
@@ -52,6 +54,9 @@ class Obj {
         [[nodiscard]] const std::vector<cookie::Vector2D<float>>& getTextureCoordinates() const;
         [[nodiscard]] const std::vector<cookie::Vector3D<float>>& getNormals() const;
         [[nodiscard]] const std::vector<Face>& getFaces() const;
+        [[nodiscard]] const std::vector<std::string>& getMaterialPath() const;
+
+        bool hasImage() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Obj& obj);

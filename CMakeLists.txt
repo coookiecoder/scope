@@ -19,7 +19,9 @@ message(STATUS "SFML include directory :" ${sfml_SOURCE_DIR})
 add_executable(Scope main.cpp class/Obj.cpp class/Vector.cpp include/Obj.hpp
         class/VulkanApplication.cpp
         include/VulkanApplication.hpp
-        template/Matrix.tpp)
+        template/Matrix.tpp
+        class/MaterialLoader.cpp
+        include/MaterialLoader.hpp)
 
 find_package(Vulkan REQUIRED)
 find_package(X11 REQUIRED)

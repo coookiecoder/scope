@@ -7,6 +7,7 @@
 #include <X11/Xlib.h>
 
 #include "include/Obj.hpp"
+#include "include/MaterialLoader.hpp"
 #include "include/VulkanApplication.hpp"
 
 bool fast = false;
@@ -50,6 +51,16 @@ int main(const int argc, const char *argv[]) {
     if (verbose) {
         std::cout << "Data loaded : " << std::endl;
         std::cout << object << std::endl;
+    }
+
+    std::optional<MaterialLoader> material;
+
+    if (object.hasImage()) {
+        material.emplace(object.getMaterialPath());
+        if (verbose) {
+            std::cout << "Material loaded : " << std::endl;
+            std::cout << material.value() << std::endl;
+        }
     }
 
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();

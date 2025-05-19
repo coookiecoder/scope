@@ -102,6 +102,15 @@ void Obj::parseFace(const std::string &line) {
     faces.push_back(face);
 }
 
+void Obj::parseMaterial(const std::string &line, std::string path_obj) {
+    path_obj = path_obj.substr(0, path_obj.find_last_of('/') + 1);
+    std::string path;
+    std::istringstream iss(line);
+    std::string type; // for the "vn"
+    iss >> type >> path;
+    material_path.emplace_back(path_obj + path);
+}
+
 
 Obj::Obj(const std::string& path) {
     std::ifstream file(path);
@@ -125,6 +134,8 @@ Obj::Obj(const std::string& path) {
             this->parseNormal(line);
         } else if (type == "f") {
             this->parseFace(line);
+        } else if (type == "mtllib") {
+            this->parseMaterial(line, path);
         }
     }
 }
@@ -147,11 +158,22 @@ const std::vector<Face>& Obj::getFaces() const {
     return faces;
 }
 
+const std::vector<std::string>& Obj::getMaterialPath() const {
+    return material_path;
+}
+
+
+bool Obj::hasImage() const {
+    return !this->material_path.empty();
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Obj& obj) {
     auto &vertices = obj.getVertices();
     auto &texture_coordinates = obj.getTextureCoordinates();
     auto &normals = obj.getNormals();
     auto &faces = obj.getFaces();
+    auto &material_path = obj.getMaterialPath();
 
     os << "Vertices: " << vertices.size() << std::endl;
     for (auto item : vertices)
@@ -164,6 +186,9 @@ std::ostream& operator<<(std::ostream& os, const Obj& obj) {
         os << item << std::endl;
     os << std::endl << "Faces: " << faces.size() << std::endl;
     for (const auto& item : faces)
+        os << item << std::endl;
+    os << std::endl << "Metrial files: " << material_path.size() << std::endl;
+    for (const auto& item : material_path)
         os << item << std::endl;
 
     return os;
