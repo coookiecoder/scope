@@ -19,7 +19,7 @@ const std::vector<int>& Face::getNormalsIndex() const {
     return normals_index;
 }
 
-int Face::getVerticesIndex(const int index) const {
+int Face::getVerticeIndex(const int index) const {
     return vertices_index[index];
 }
 

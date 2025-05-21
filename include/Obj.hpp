@@ -21,7 +21,7 @@ class Face {
         [[nodiscard]] const std::vector<int>& getTexturesIndex() const;
         [[nodiscard]] const std::vector<int>& getNormalsIndex() const;
 
-        [[nodiscard]] int getVerticesIndex(int index) const;
+        [[nodiscard]] int getVerticeIndex(int index) const;
         [[nodiscard]] int getTextureIndex(int index) const;
         [[nodiscard]] int getNormalIndex(int index) const;
 

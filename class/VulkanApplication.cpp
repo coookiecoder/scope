@@ -1050,18 +1050,18 @@ void VulkanApplication::loadModel() {
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
     for (const auto& shape: obj.getFaces()) {
-        for (const auto& index : shape.getVerticesIndex()) {
+        for (int index = 0; index < shape.getVerticesIndex().size(); index++) {
             Vertex vertex{};
 
             vertex.pos = {
-                obj.getVertices()[index - 1].getX(),
-                obj.getVertices()[index - 1].getY(),
-                obj.getVertices()[index - 1].getZ()
+                obj.getVertices()[shape.getVerticeIndex(index) - 1].getX(),
+                obj.getVertices()[shape.getVerticeIndex(index) - 1].getY(),
+                obj.getVertices()[shape.getVerticeIndex(index) - 1].getZ()
             };
 
             vertex.texCoord = {
-                obj.getTextureCoordinates()[index - 1].getX(),
-                1.0f - obj.getTextureCoordinates()[index - 1].getY()
+                obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getX(),
+                1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getY()
             };
 
             vertex.color = {1.0f, 1.0f, 1.0f};
@@ -1472,6 +1472,8 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    time = 0;
 
     UniformBufferObject ubo{};
     ubo.model = cookie::rotate(cookie::Matrix4D<float>(1.0f), time * 3.14f, cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
