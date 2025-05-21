@@ -26,6 +26,8 @@ namespace cookie
         void setX(Type x);
         void setY(Type y);
         void setZ(Type z);
+
+        bool operator==(const Vector3D<Type>& other) const;
     };
 
     template <class Type>
@@ -49,6 +51,8 @@ namespace cookie
 
         void setX(Type x);
         void setY(Type y);
+
+        bool operator==(const Vector2D<Type>& other) const;
     };
 
     template <class Type>
@@ -103,6 +107,11 @@ namespace cookie
     }
 
     template <class Type>
+    bool Vector3D<Type>::operator==(const Vector3D<Type>& other) const {
+        return this->x == other.x && this->y == other.y && this->z == other.z;
+    }
+
+    template <class Type>
     std::ostream& operator<<(std::ostream& os, Vector3D<Type>& vector) {
         os << "[" << vector.getX() << "," << vector.getY() << "," << vector.getZ() << "]";
         return os;
@@ -153,6 +162,12 @@ namespace cookie
     void Vector2D<Type>::setY(const Type y) {
         this->y = y;
     }
+
+    template <class Type>
+    bool Vector2D<Type>::operator==(const Vector2D<Type>& other) const {
+        return this->x == other.x && this->y == other.y;
+    }
+
 
     template <class Type>
     std::ostream& operator<<(std::ostream& os, Vector2D<Type>& vector) {

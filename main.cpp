@@ -77,9 +77,9 @@ int main(const int argc, const char *argv[]) {
 
 	try {
 	    if (object.hasImage())
-            app.emplace(verbose, window, material.value().getMaterials()[0].map_Kd);
+            app.emplace(verbose, window, material.value().getMaterials()[0].map_Kd, object);
 	    else
-	        app.emplace(verbose, window, "");
+	        app.emplace(verbose, window, "", object);
 	} catch (std::exception &error) {
 		std::cerr << error.what() << std::endl;
 		return (1);

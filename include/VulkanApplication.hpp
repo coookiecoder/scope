@@ -8,6 +8,7 @@
 #include <set>
 #include <algorithm>
 #include <cstring>
+#include <unordered_map>
 
 #include <vulkan/vulkan.h>
 
@@ -53,30 +54,37 @@ struct Vertex {
 
         return attributeDescriptions;
     }
+
+    bool operator==(const Vertex& other) const {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
 };
 
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+inline void hashCombine(std::size_t& seed, std::size_t value) {
+    seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+namespace std {
+    template<>
+    struct hash<Vertex> {
+        size_t operator()(const Vertex& vertex) const noexcept {
+            size_t seed = 0;
+            // Manually hash each float component if cookie::Vector* lacks hashing
+            hashCombine(seed, std::hash<float>()(vertex.pos.x));
+            hashCombine(seed, std::hash<float>()(vertex.pos.y));
+            hashCombine(seed, std::hash<float>()(vertex.pos.z));
 
-    {{-0.5f, -0.5f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
+            hashCombine(seed, std::hash<float>()(vertex.color.x));
+            hashCombine(seed, std::hash<float>()(vertex.color.y));
+            hashCombine(seed, std::hash<float>()(vertex.color.z));
 
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
-    8, 9, 10, 10, 11, 8,
-};
+            hashCombine(seed, std::hash<float>()(vertex.texCoord.x));
+            hashCombine(seed, std::hash<float>()(vertex.texCoord.y));
+
+            return seed;
+        }
+    };
+}
 
 struct UniformBufferObject {
     cookie::Matrix4D<float> model;
@@ -148,12 +156,18 @@ class VulkanApplication {
         VkDeviceMemory              textureImageMemory = VK_NULL_HANDLE;
         VkImageView                 textureImageView = VK_NULL_HANDLE;
         VkSampler                   textureSampler = VK_NULL_HANDLE;
+        VkImage                     depthImage = VK_NULL_HANDLE;
+        VkDeviceMemory              depthImageMemory = VK_NULL_HANDLE;
+        VkImageView                 depthImageView = VK_NULL_HANDLE;
+        std::vector<Vertex>         vertices;
+        std::vector<uint32_t>       indices;
 
         bool                        verbose;
         int                         currentFrame = 0;
         bool                        frameBufferResized = false;
         bool                        swapChainState = false;
         std::string                 texturePath;
+        const Obj&                  obj;
 
         void                        initVulkan();
         bool                        checkValidationLayerSupport();
@@ -196,6 +210,11 @@ class VulkanApplication {
 
         void                        createCommandPool();
 
+        void                        createDepthResources();
+        VkFormat                    findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+        VkFormat                    findDepthFormat();
+        bool                        hasStencilComponent(VkFormat format);
+
         void                        createTextureImage();
         void                        createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
         VkCommandBuffer             beginSingleTimeCommands();
@@ -204,9 +223,11 @@ class VulkanApplication {
         void                        copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
         void                        createTextureImageView();
-        VkImageView                 createImageView(VkImage image, VkFormat format);
+        VkImageView                 createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
         void                        createTextureSampler();
+
+        void                        loadModel();
 
         void                        createVertexBuffer();
         void                        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
@@ -231,7 +252,7 @@ class VulkanApplication {
 
         void                        updateUniformBuffer(uint32_t currentImage);
     public:
-        explicit                    VulkanApplication(bool verbose, sf::Window& window, std::string texturePath);
+        explicit                    VulkanApplication(bool verbose, sf::Window& window, std::string texturePath, const Obj& obj);
 
         ~VulkanApplication();
 
