@@ -1473,8 +1473,6 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    time = 0;
-
     UniformBufferObject ubo{};
     ubo.model = cookie::rotate(cookie::Matrix4D<float>(1.0f), time * 3.14f, cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
