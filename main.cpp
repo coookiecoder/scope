@@ -13,8 +13,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
 
-bool fast = false;
-
 void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, VulkanApplication& app) {
     switch (event->code) {
         default:
@@ -27,6 +25,11 @@ void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, 
             break;
         case sf::Keyboard::Key::S:
             app.zoom -= 0.1f;
+            break;
+        case sf::Keyboard::Key::Space:
+            app.useTexture = !app.useTexture;
+            app.updateTexture = true;
+            break;
     }
 }
 

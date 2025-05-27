@@ -1094,6 +1094,9 @@ void VulkanApplication::createDummyTexture() {
 }
 
 void VulkanApplication::loadModel() {
+    vertices.clear();
+    indices.clear();
+
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
     std::random_device rd;
@@ -1124,13 +1127,13 @@ void VulkanApplication::loadModel() {
                     obj.getVertices()[shape.getVerticeIndex(index) - 1].getZ()
                 };
 
-                if (texturePath.empty()) {
+                if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
                 } else
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getY()};
 
-                if (texturePath.empty()) {
+                if (texturePath.empty() || this->useTexture == false) {
                     vertex.color.x = r;
                     vertex.color.y = g;
                     vertex.color.z = b;
@@ -1157,13 +1160,19 @@ void VulkanApplication::loadModel() {
                     obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getZ()
                 };
 
-                if (texturePath.empty()) {
+                if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
                 } else
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
 
-                vertex.color = {1.0f, 1.0f, 1.0f};
+                if (texturePath.empty() || this->useTexture == false) {
+                    vertex.color.x = r;
+                    vertex.color.y = g;
+                    vertex.color.z = b;
+                } else {
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+                }
 
                 if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -1181,13 +1190,19 @@ void VulkanApplication::loadModel() {
                     obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getZ()
                 };
 
-                if (texturePath.empty()) {
+                if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
                 } else
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
 
-                vertex.color = {0.5f, 0.5f, 0.5f};
+                if (texturePath.empty() || this->useTexture == false) {
+                    vertex.color.x = r;
+                    vertex.color.y = g;
+                    vertex.color.z = b;
+                } else {
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+                }
 
                 if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -1218,6 +1233,15 @@ void VulkanApplication::createCommandBuffer() {
 
 void VulkanApplication::createVertexBuffer()  {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    if (vertexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(this->logicalDevice, vertexBuffer, nullptr);
+        vertexBuffer = VK_NULL_HANDLE;
+    }
+    if (vertexBufferMemory != VK_NULL_HANDLE) {
+        vkFreeMemory(this->logicalDevice, vertexBufferMemory, nullptr);
+        vertexBufferMemory = VK_NULL_HANDLE;
+    }
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1278,6 +1302,15 @@ uint32_t VulkanApplication::findMemoryType(uint32_t typeFilter, VkMemoryProperty
 
 void VulkanApplication::createIndexBuffer() {
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    if (indexBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(this->logicalDevice, indexBuffer, nullptr);
+        indexBuffer = VK_NULL_HANDLE;
+    }
+    if (indexBufferMemory != VK_NULL_HANDLE) {
+        vkFreeMemory(this->logicalDevice, indexBufferMemory, nullptr);
+        indexBufferMemory = VK_NULL_HANDLE;
+    }
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1614,7 +1647,7 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
 
     ubo.view = cookie::lookAt(cookie::Vector3D<float>(zoom, zoom, zoom), cookie::Vector3D<float>(0.0f, 0.0f, 0.0f), cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
-    ubo.proj = cookie::perspective(static_cast<float>(3.14 / 4), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+    ubo.proj = cookie::perspective(static_cast<float>(3.14 / 4), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 100.0f);
 
     ubo.proj[1][1] *= -1;
 
@@ -1631,6 +1664,16 @@ VulkanApplication::~VulkanApplication() {
 
 void VulkanApplication::drawFrame() {
     vkWaitForFences(this->logicalDevice, 1, &inFlightFence[currentFrame], VK_TRUE, UINT64_MAX);
+
+    if (updateTexture) {
+        for (int frame = 0; frame < MAX_FRAMES_IN_FLIGHT; frame++)
+            vkWaitForFences(this->logicalDevice, 1, &inFlightFence[frame], VK_TRUE, UINT64_MAX);
+
+        this->loadModel();
+        this->createVertexBuffer();
+        this->createIndexBuffer();
+        updateTexture = false;
+    }
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(this->logicalDevice, swapChain, UINT64_MAX, imageAvailableSemaphore[currentFrame], VK_NULL_HANDLE, &imageIndex);

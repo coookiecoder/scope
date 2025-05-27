@@ -267,4 +267,6 @@ class VulkanApplication {
         void                        triggerResize();
 
         float                       zoom = 2.0f;
+        bool                        useTexture = false;
+        bool                        updateTexture = false;
 };
