@@ -13,12 +13,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
 
+bool run = true;
+
 void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, VulkanApplication& app) {
     switch (event->code) {
         default:
             break;
         case sf::Keyboard::Key::Escape:
-            window.close();
+            run = false;
             break;
         case sf::Keyboard::Key::W:
             app.zoom += 0.1f;
@@ -84,18 +86,21 @@ int main(const int argc, const char *argv[]) {
 	std::optional<VulkanApplication> app;
 
 	try {
-	    if (object.hasImage())
+	    if (object.hasImage() && material.value().getMaterials()[0].map_Kd.empty() == false)
             app.emplace(verbose, window, material.value().getMaterials()[0].map_Kd, object);
+	    else if (object.hasImage())
+	        app.emplace(verbose, window, cookie::Vector3D(material.value().getMaterials()[0].Kd[0] * 255.0f, material.value().getMaterials()[0].Kd[1] * 255.0f, material.value().getMaterials()[0].Kd[2] * 255.0f), object);
 	    else
 	        app.emplace(verbose, window, "", object);
 	} catch (std::exception &error) {
+	    std::cerr << "creating application failed" << std::endl;
 		std::cerr << error.what() << std::endl;
 		return (1);
 	}
 
     app->wait();
 
-    while (window.isOpen()) {
+    while (window.isOpen() && run) {
         while (const std::optional event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>())
                 window.close();

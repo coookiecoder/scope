@@ -1035,7 +1035,7 @@ void VulkanApplication::createTextureSampler() {
 
 void VulkanApplication::createDummyTexture() {
     // 1x1 white pixel RGBA
-    uint8_t whitePixel[4] = {255, 255, 255, 255};
+    uint8_t whitePixel[4] = {static_cast<uint8_t>(map_Kd[0]), static_cast<uint8_t>(map_Kd[1]), static_cast<uint8_t>(map_Kd[2]), 255};
 
     VkDeviceSize imageSize = sizeof(whitePixel);
 
@@ -1101,19 +1101,17 @@ void VulkanApplication::loadModel() {
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+    std::uniform_real_distribution<float> dis(0.0f, 0.9f);
 
     for (const auto& shape: obj.getFaces()) {
 
-        const float r = dis(gen);
-        const float g = dis(gen);
-        const float b = dis(gen);
+        const float white = dis(gen);
 
         const float x = dis(gen);
         const float y = dis(gen);
 
         if (this->verbose) {
-            std::cout << "Face color : " << r << " " << g << " " << b << std::endl;
+            std::cout << "Face color : " << white << std::endl;
             std::cout << "Face coord : " << x << " " << y << " " << std::endl;
         }
 
@@ -1130,13 +1128,14 @@ void VulkanApplication::loadModel() {
                 if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
-                } else
+                } else {
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getY()};
+                }
 
-                if (texturePath.empty() || this->useTexture == false) {
-                    vertex.color.x = r;
-                    vertex.color.y = g;
-                    vertex.color.z = b;
+                if (this->useTexture == false) {
+                    vertex.color.x = white;
+                    vertex.color.y = white;
+                    vertex.color.z = white;
                 } else {
                     vertex.color = {1.0f, 1.0f, 1.0f};
                 }
@@ -1163,13 +1162,14 @@ void VulkanApplication::loadModel() {
                 if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
-                } else
+                } else {
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
+                }
 
-                if (texturePath.empty() || this->useTexture == false) {
-                    vertex.color.x = r;
-                    vertex.color.y = g;
-                    vertex.color.z = b;
+                if (this->useTexture == false) {
+                    vertex.color.x = white;
+                    vertex.color.y = white;
+                    vertex.color.z = white;
                 } else {
                     vertex.color = {1.0f, 1.0f, 1.0f};
                 }
@@ -1193,13 +1193,14 @@ void VulkanApplication::loadModel() {
                 if (texturePath.empty() || this->useTexture == false) {
                     vertex.texCoord.x = x;
                     vertex.texCoord.y = y;
-                } else
+                } else {
                     vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
+                }
 
-                if (texturePath.empty() || this->useTexture == false) {
-                    vertex.color.x = r;
-                    vertex.color.y = g;
-                    vertex.color.z = b;
+                if (this->useTexture == false) {
+                    vertex.color.x = white;
+                    vertex.color.y = white;
+                    vertex.color.z = white;
                 } else {
                     vertex.color = {1.0f, 1.0f, 1.0f};
                 }
@@ -1655,6 +1656,14 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
 }
 
 VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, std::string texturePath, const Obj& obj) : window(window), verbose(verbose), texturePath(std::move(texturePath)), obj(obj), zoom(2.0f) {
+    this->initVulkan();
+}
+
+VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, const cookie::Vector3D<float>& Kd, const Obj& obj) : window(window), verbose(verbose), texturePath(""), obj(obj), zoom(2.0f), map_Kd{Kd.x, Kd.y, Kd.z} {
+    std::cout << map_Kd[0] << std::endl;
+    std::cout << map_Kd[1] << std::endl;
+    std::cout << map_Kd[2] << std::endl;
+
     this->initVulkan();
 }
 

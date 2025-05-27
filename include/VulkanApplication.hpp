@@ -173,6 +173,7 @@ class VulkanApplication {
         bool                        swapChainState = false;
         std::string                 texturePath;
         const Obj&                  obj;
+        const float                 map_Kd[3] = {255.0, 255.0, 255.0};
 
         void                        initVulkan();
         bool                        checkValidationLayerSupport();
@@ -259,6 +260,7 @@ class VulkanApplication {
         void                        updateUniformBuffer(uint32_t currentImage);
     public:
         explicit                    VulkanApplication(bool verbose, sf::Window& window, std::string texturePath, const Obj& obj);
+        explicit                    VulkanApplication(bool verbose, sf::Window& window, const cookie::Vector3D<float>& Kd, const Obj& obj);
 
         ~VulkanApplication();
 

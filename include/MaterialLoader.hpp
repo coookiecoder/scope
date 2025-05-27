@@ -9,7 +9,7 @@ struct Material {
     std::string map_Kd;
     std::string map_Bump;
     float Ka[3] = {};
-    float Kd[3] = {};
+    float Kd[3] = {1.0, 1.0, 1.0};
     float Ks[3] = {};
     float d = 1.0f;
     int illum = 0;
