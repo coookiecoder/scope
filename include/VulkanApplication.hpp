@@ -271,4 +271,7 @@ class VulkanApplication {
         float                       zoom = 2.0f;
         bool                        useTexture = false;
         bool                        updateTexture = false;
+        float                       center_x = 0.0f;
+        float                       center_y = 0.0f;
+        float                       center_z = 0.0f;
 };

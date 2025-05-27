@@ -137,6 +137,17 @@ namespace cookie {
     }
 
     template<typename Type>
+    Matrix4D<Type> translate(const Matrix4D<Type>& mat, const Vector3D<Type>& vec) {
+        Matrix4D<Type> result = mat;
+
+        result[3][0] += vec.x;
+        result[3][1] += vec.y;
+        result[3][2] += vec.z;
+
+        return result;
+    }
+
+    template<typename Type>
     Matrix4D<Type> lookAt(const Vector3D<Type>& eye, const Vector3D<Type>& center, const Vector3D<Type>& up) {
         const cookie::Vector3D<float> f = cookie::normalize(cookie::subtract(center, eye));
         const cookie::Vector3D<float> s = cookie::normalize(cookie::cross(f, up));

@@ -22,12 +22,26 @@ void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, 
         case sf::Keyboard::Key::Escape:
             run = false;
             break;
+
+        case sf::Keyboard::Key::A:
+            app.center_x += 0.1f;
+            break;
+        case sf::Keyboard::Key::E:
+            app.center_x -= 0.1f;
+            break;
         case sf::Keyboard::Key::W:
-            app.zoom += 0.1f;
+            app.center_z += 0.1f;
             break;
         case sf::Keyboard::Key::S:
-            app.zoom -= 0.1f;
+            app.center_z -= 0.1f;
             break;
+        case sf::Keyboard::Key::D:
+            app.center_y += 0.1f;
+            break;
+        case sf::Keyboard::Key::Q:
+            app.center_y -= 0.1f;
+            break;
+
         case sf::Keyboard::Key::Space:
             app.useTexture = !app.useTexture;
             app.updateTexture = true;
