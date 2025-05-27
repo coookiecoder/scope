@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstring>
 #include <unordered_map>
+#include <random>
 
 #include <vulkan/vulkan.h>
 
@@ -156,6 +157,10 @@ class VulkanApplication {
         VkDeviceMemory              textureImageMemory = VK_NULL_HANDLE;
         VkImageView                 textureImageView = VK_NULL_HANDLE;
         VkSampler                   textureSampler = VK_NULL_HANDLE;
+        VkImage                     dummyTextureImage = VK_NULL_HANDLE;
+        VkDeviceMemory              dummyTextureImageMemory = VK_NULL_HANDLE;
+        VkImageView                 dummyTextureImageView = VK_NULL_HANDLE;
+        VkSampler                   dummyTextureSampler = VK_NULL_HANDLE;
         VkImage                     depthImage = VK_NULL_HANDLE;
         VkDeviceMemory              depthImageMemory = VK_NULL_HANDLE;
         VkImageView                 depthImageView = VK_NULL_HANDLE;
@@ -226,6 +231,7 @@ class VulkanApplication {
         VkImageView                 createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
         void                        createTextureSampler();
+        void                        createDummyTexture();
 
         void                        loadModel();
 
@@ -259,4 +265,6 @@ class VulkanApplication {
         void                        drawFrame();
 		void						wait();
         void                        triggerResize();
+
+        float                       zoom = 2.0f;
 };

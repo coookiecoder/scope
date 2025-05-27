@@ -22,6 +22,11 @@ void handle_key_pressed(const sf::Event::KeyPressed* event, sf::Window& window, 
         case sf::Keyboard::Key::Escape:
             window.close();
             break;
+        case sf::Keyboard::Key::W:
+            app.zoom += 0.1f;
+            break;
+        case sf::Keyboard::Key::S:
+            app.zoom -= 0.1f;
     }
 }
 

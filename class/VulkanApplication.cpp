@@ -80,17 +80,21 @@ void VulkanApplication::initVulkan() {
         std::cout << "Creating command pool" << std::endl;
     this->createCommandPool();
 
-    if (this->verbose)
-        std::cout << "Creating texture image" << std::endl;
-    this->createTextureImage();
+    if (texturePath.empty() == false) {
+        if (this->verbose)
+            std::cout << "Creating texture image" << std::endl;
+        this->createTextureImage();
 
-    if (this->verbose)
-        std::cout << "Creating texture image view" << std::endl;
-    this->createTextureImageView();
+        if (this->verbose)
+            std::cout << "Creating texture image view" << std::endl;
+        this->createTextureImageView();
 
-    if (this->verbose)
-        std::cout << "Creating texture sampler" << std::endl;
-    this->createTextureSampler();
+        if (this->verbose)
+            std::cout << "Creating texture sampler" << std::endl;
+        this->createTextureSampler();
+    } else {
+        this->createDummyTexture();
+    }
 
     if (this->verbose)
         std::cout << "Loading model into the vulkan application" << std::endl;
@@ -1029,32 +1033,171 @@ void VulkanApplication::createTextureSampler() {
     }
 }
 
+void VulkanApplication::createDummyTexture() {
+    // 1x1 white pixel RGBA
+    uint8_t whitePixel[4] = {255, 255, 255, 255};
+
+    VkDeviceSize imageSize = sizeof(whitePixel);
+
+    // Create staging buffer
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+    // Copy pixel data to staging buffer
+    void* data;
+    vkMapMemory(logicalDevice, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, whitePixel, static_cast<size_t>(imageSize));
+    vkUnmapMemory(logicalDevice, stagingBufferMemory);
+
+    // Create dummy image (1x1, VK_FORMAT_R8G8B8A8_UNORM)
+    createImage(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dummyTextureImage, dummyTextureImageMemory);
+
+    // Transition image layout to DST_OPTIMAL
+    transitionImageLayout(dummyTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    // Copy buffer to image
+    copyBufferToImage(stagingBuffer, dummyTextureImage, 1, 1);
+
+    // Transition image layout to SHADER_READ_ONLY_OPTIMAL
+    transitionImageLayout(dummyTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    // Cleanup staging buffer
+    vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
+    vkFreeMemory(logicalDevice, stagingBufferMemory, nullptr);
+
+    // Create image view for dummy texture
+    dummyTextureImageView = createImageView(dummyTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    // Create sampler for dummy texture
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+
+    if (vkCreateSampler(logicalDevice, &samplerInfo, nullptr, &dummyTextureSampler) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create dummy texture sampler!");
+    }
+}
+
 void VulkanApplication::loadModel() {
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+
     for (const auto& shape: obj.getFaces()) {
-        for (int index = 0; index < shape.getVerticesIndex().size(); index++) {
-            Vertex vertex{};
 
-            vertex.pos = {
-                obj.getVertices()[shape.getVerticeIndex(index) - 1].getX(),
-                obj.getVertices()[shape.getVerticeIndex(index) - 1].getY(),
-                obj.getVertices()[shape.getVerticeIndex(index) - 1].getZ()
-            };
+        const float r = dis(gen);
+        const float g = dis(gen);
+        const float b = dis(gen);
 
-            vertex.texCoord = {
-                obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getX(),
-                1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getY()
-            };
+        const float x = dis(gen);
+        const float y = dis(gen);
 
-            vertex.color = {1.0f, 1.0f, 1.0f};
+        if (this->verbose) {
+            std::cout << "Face color : " << r << " " << g << " " << b << std::endl;
+            std::cout << "Face coord : " << x << " " << y << " " << std::endl;
+        }
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                vertices.push_back(vertex);
+        if (shape.getVerticesIndex().size() == 3) {
+            for (int index = 0; index < shape.getVerticesIndex().size(); index++) {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    obj.getVertices()[shape.getVerticeIndex(index) - 1].getX(),
+                    obj.getVertices()[shape.getVerticeIndex(index) - 1].getY(),
+                    obj.getVertices()[shape.getVerticeIndex(index) - 1].getZ()
+                };
+
+                if (texturePath.empty()) {
+                    vertex.texCoord.x = x;
+                    vertex.texCoord.y = y;
+                } else
+                    vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(index) - 1].getY()};
+
+                if (texturePath.empty()) {
+                    vertex.color.x = r;
+                    vertex.color.y = g;
+                    vertex.color.z = b;
+                } else {
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+                }
+
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+
+                indices.push_back(uniqueVertices[vertex]);
             }
+        } else if (shape.getVerticesIndex().size() == 4) {
+            int quadIndex[4] = {0, 1, 2, 3};
 
-            indices.push_back(uniqueVertices[vertex]);
+            for (int i : {0, 1, 2}) {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getX(),
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getY(),
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getZ()
+                };
+
+                if (texturePath.empty()) {
+                    vertex.texCoord.x = x;
+                    vertex.texCoord.y = y;
+                } else
+                    vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
+
+                vertex.color = {1.0f, 1.0f, 1.0f};
+
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+
+                indices.push_back(uniqueVertices[vertex]);
+            }
+            for (int i : {0, 2, 3}) {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getX(),
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getY(),
+                    obj.getVertices()[shape.getVerticeIndex(quadIndex[i]) - 1].getZ()
+                };
+
+                if (texturePath.empty()) {
+                    vertex.texCoord.x = x;
+                    vertex.texCoord.y = y;
+                } else
+                    vertex.texCoord = {obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getX(), 1.0f - obj.getTextureCoordinates()[shape.getTextureIndex(quadIndex[i]) - 1].getY()};
+
+                vertex.color = {0.5f, 0.5f, 0.5f};
+
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+
+                indices.push_back(uniqueVertices[vertex]);
+            }
+        } else {
+            throw std::runtime_error("I'm no dealing with n-gons");
         }
     }
 }
@@ -1206,8 +1349,14 @@ void VulkanApplication::createDescriptorSets() {
 
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = textureImageView;
-        imageInfo.sampler = textureSampler;
+
+        if (!texturePath.empty()) {
+            imageInfo.imageView = textureImageView;
+            imageInfo.sampler = textureSampler;
+        } else {
+            imageInfo.imageView = dummyTextureImageView;
+            imageInfo.sampler = dummyTextureSampler;
+        }
 
         std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -1227,7 +1376,7 @@ void VulkanApplication::createDescriptorSets() {
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
-        vkUpdateDescriptorSets(this->logicalDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
 
@@ -1362,6 +1511,10 @@ void VulkanApplication::cleanUp() {
     vkDestroyImageView(this->logicalDevice, this->textureImageView, nullptr);
     vkDestroyImage(this->logicalDevice, this->textureImage, nullptr);
     vkFreeMemory(this->logicalDevice, this->textureImageMemory, nullptr);
+    vkDestroySampler(this->logicalDevice, this->dummyTextureSampler, nullptr);
+    vkDestroyImageView(this->logicalDevice, this->dummyTextureImageView, nullptr);
+    vkDestroyImage(this->logicalDevice, this->dummyTextureImage, nullptr);
+    vkFreeMemory(this->logicalDevice, this->dummyTextureImageMemory, nullptr);
 
     if (this->verbose)
         std::cout << "Destroying graphics pipeline" << std::endl;
@@ -1459,7 +1612,7 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
     UniformBufferObject ubo{};
     ubo.model = cookie::rotate(cookie::Matrix4D<float>(1.0f), time * 3.14f, cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
-    ubo.view = cookie::lookAt(cookie::Vector3D<float>(2.0f, 2.0f, 2.0f), cookie::Vector3D<float>(0.0f, 0.0f, 0.0f), cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
+    ubo.view = cookie::lookAt(cookie::Vector3D<float>(zoom, zoom, zoom), cookie::Vector3D<float>(0.0f, 0.0f, 0.0f), cookie::Vector3D<float>(0.0f, 0.0f, 1.0f));
 
     ubo.proj = cookie::perspective(static_cast<float>(3.14 / 4), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
 
@@ -1468,7 +1621,7 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage) {
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, std::string texturePath, const Obj& obj) : window(window), verbose(verbose), texturePath(std::move(texturePath)), obj(obj) {
+VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, std::string texturePath, const Obj& obj) : window(window), verbose(verbose), texturePath(std::move(texturePath)), obj(obj), zoom(2.0f) {
     this->initVulkan();
 }
 
