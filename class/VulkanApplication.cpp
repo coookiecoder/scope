@@ -1660,10 +1660,6 @@ VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, std::stri
 }
 
 VulkanApplication::VulkanApplication(bool verbose, sf::Window &window, const cookie::Vector3D<float>& Kd, const Obj& obj) : window(window), verbose(verbose), texturePath(""), obj(obj), zoom(2.0f), map_Kd{Kd.x, Kd.y, Kd.z} {
-    std::cout << map_Kd[0] << std::endl;
-    std::cout << map_Kd[1] << std::endl;
-    std::cout << map_Kd[2] << std::endl;
-
     this->initVulkan();
 }
 
