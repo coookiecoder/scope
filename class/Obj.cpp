@@ -94,10 +94,20 @@ void Obj::parseFace(const std::string &line) {
         std::istringstream tokenStream(token);
         int vertexIdx, texCoordIdx, normalIdx = 0;
 
-        tokenStream >> vertexIdx >> texCoordIdx >> normalIdx;
-        face.addVerticesIndex(vertexIdx);
-        face.addTexturesIndex(texCoordIdx);
-        face.addNormalsIndex(normalIdx);
+        if (tokenStream >> vertexIdx)
+            face.addVerticesIndex(vertexIdx);
+        else
+            face.addVerticesIndex(0);
+
+        if (tokenStream >> texCoordIdx)
+            face.addTexturesIndex(texCoordIdx);
+        else
+            face.addTexturesIndex(0);
+
+        if (tokenStream >> normalIdx)
+            face.addNormalsIndex(normalIdx);
+        else
+            face.addNormalsIndex(0);
     }
     faces.push_back(face);
 }
